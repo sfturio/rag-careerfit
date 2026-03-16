@@ -67,3 +67,12 @@ def test_breakdown_contains_rag_evidence_for_present_skill() -> None:
     assert python_item.present_in_resume is True
     assert python_item.evidence is not None
     assert "python" in python_item.evidence.lower()
+
+
+def test_study_plan_has_non_repeated_week_focus() -> None:
+    resume = "Experiencia com C#, .NET e Git."
+    job = "Requisitos: C#, .NET, SQL Server, Testes automatizados e Azure."
+    result = analyze_resume_vs_job(resume_text=resume, job_description=job, target_role="Backend .NET")
+    focuses = [item.focus for item in result.study_plan]
+    assert len(focuses) == 4
+    assert len(set(focuses)) == 4

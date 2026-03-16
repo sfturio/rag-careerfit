@@ -212,8 +212,8 @@ def _excerpt_around_skill(text: str, skill: str, max_len: int = 180) -> str:
     return snippet
 
 
-def _build_study_plan(missing_skills: list[str]) -> list[StudyItem]:
-    if not missing_skills:
+def _build_study_plan(prioritized_missing: list[tuple[str, float, str]]) -> list[StudyItem]:
+    if not prioritized_missing:
         return [
             StudyItem(
                 week=1,
@@ -226,29 +226,59 @@ def _build_study_plan(missing_skills: list[str]) -> list[StudyItem]:
             )
         ]
 
-    ordered = list(OrderedDict.fromkeys(missing_skills))
-    chunks = [ordered[i : i + 2] for i in range(0, len(ordered), 2)]
-    plan: list[StudyItem] = []
-    for week in range(1, 5):
-        idx = min(week - 1, len(chunks) - 1)
-        week_skills = chunks[idx]
-        primary = ", ".join(week_skills)
-        resources = []
-        for skill in week_skills:
-            resources.extend(RESOURCES_BY_SKILL.get(skill, [f"Documentacao oficial de {skill}"]))
-        plan.append(
-            StudyItem(
-                week=week,
-                focus=f"Aprofundar: {primary}",
-                actions=[
-                    f"Estudar fundamentos de {primary}.",
-                    f"Implementar mini projeto aplicando {primary}.",
-                    "Documentar aprendizados no GitHub.",
-                ],
-                resources=resources[:4],
-            )
-        )
-    return plan
+    ordered = list(OrderedDict.fromkeys([skill for skill, _, _ in prioritized_missing]))
+    top1 = ordered[0]
+    top2 = ordered[1] if len(ordered) > 1 else top1
+    top3 = ordered[2] if len(ordered) > 2 else top2
+
+    def _resources(skills: list[str]) -> list[str]:
+        items: list[str] = []
+        for skill in skills:
+            items.extend(RESOURCES_BY_SKILL.get(skill, [f"Documentacao oficial de {skill}"]))
+        return list(OrderedDict.fromkeys(items))[:4]
+
+    return [
+        StudyItem(
+            week=1,
+            focus=f"Fundamentos e lacuna critica: {top1}",
+            actions=[
+                f"Revisar fundamentos e principais conceitos de {top1}.",
+                f"Resolver 2 exercicios praticos focados em {top1}.",
+                "Registrar resumo tecnico com exemplos no GitHub.",
+            ],
+            resources=_resources([top1]),
+        ),
+        StudyItem(
+            week=2,
+            focus=f"Projeto guiado com foco em {top1} e {top2}",
+            actions=[
+                f"Construir mini API/projeto aplicando {top1} e {top2}.",
+                "Adicionar readme com arquitetura e decisoes tecnicas.",
+                "Publicar demo ou video curto de funcionamento.",
+            ],
+            resources=_resources([top1, top2]),
+        ),
+        StudyItem(
+            week=3,
+            focus=f"Qualidade, testes e integracao ({top2}, {top3})",
+            actions=[
+                f"Adicionar testes e validacoes nos fluxos que usam {top2}.",
+                f"Integrar com componente real de backend envolvendo {top3}.",
+                "Medir resultado (ex: cobertura, latencia, erros) e documentar.",
+            ],
+            resources=_resources([top2, top3]),
+        ),
+        StudyItem(
+            week=4,
+            focus="Prontidao para vaga: portfolio, curriculo e entrevistas",
+            actions=[
+                f"Atualizar curriculo com entregaveis concretos de {top1} e {top2}.",
+                "Preparar 5 respostas de entrevista com metodo STAR.",
+                "Aplicar para vagas-alvo e registrar feedbacks para iteracao.",
+            ],
+            resources=["GitHub", "LinkedIn Jobs", "STAR interview guide"],
+        ),
+    ]
 
 
 def _resume_suggestions(target_role: str | None, missing_skills: list[str]) -> list[str]:
@@ -345,6 +375,10 @@ def analyze_resume_vs_job(
     breakdown = _build_skill_breakdown(required_skills=required, resume_text=resume_text)
     matched = [item.skill for item in breakdown if item.present_in_resume]
     missing = [item.skill for item in breakdown if not item.present_in_resume]
+    prioritized_missing = sorted(
+        [(item.skill, item.weight, item.source_section) for item in breakdown if not item.present_in_resume],
+        key=lambda x: (-x[1], x[0]),
+    )
     score = round((len(matched) / len(required)) * 100, 2) if required else 0.0
 
     total_weight = sum(item.weight for item in breakdown) or 1.0
@@ -356,7 +390,7 @@ def analyze_resume_vs_job(
     if model_tip:
         suggestions.append(model_tip)
 
-    study_plan = _build_study_plan(missing_skills=missing)
+    study_plan = _build_study_plan(prioritized_missing=prioritized_missing)
     report_markdown = _build_markdown_report(
         target_role=target_role,
         match_score=score,
