@@ -147,9 +147,7 @@ def _build_skill_breakdown(
 
         evidence = None
         if present and best_hit and semantic_score >= 0.08:
-            excerpt = _excerpt_around_skill(
-                best_hit[0].text, skill, max_len=520, include_ellipsis=False
-            )
+            excerpt = _build_relevant_evidence_summary(best_hit[0].text, skill)
             evidence = (
                 f"Evidencia (chunk {best_hit[0].chunk_id}, score={semantic_score:.2f}): "
                 f"{excerpt}"
@@ -217,6 +215,85 @@ def _excerpt_around_skill(
     if include_ellipsis and right < len(raw):
         snippet = snippet + " ..."
     return snippet
+
+
+def _split_text_segments(text: str) -> list[str]:
+    cleaned = re.sub(r"\s+", " ", text).strip()
+    if not cleaned:
+        return []
+    raw_segments = re.split(r"(?<=[\.\!\?;:])\s+|\s*[-*•]\s+|\s{2,}", cleaned)
+    segments = [seg.strip(" -|") for seg in raw_segments if len(seg.strip()) >= 18]
+    return segments
+
+
+def _normalize_segment_prefix(segment: str) -> str:
+    return re.sub(
+        r"^(resumo|summary|technical skills|skills|projects|experiencia|experience)\s*[:\-]?\s*",
+        "",
+        segment,
+        flags=re.IGNORECASE,
+    ).strip()
+
+
+def _segment_relevance_score(segment: str, skill: str) -> int:
+    normalized = _normalize(segment)
+    score = 0
+    if _has_skill(normalized, skill):
+        score += 5
+    # Boost segments that look like real delivery context.
+    for keyword in (
+        "projeto",
+        "api",
+        "backend",
+        "implement",
+        "desenvolv",
+        "rest",
+        "sql",
+        "arquitetura",
+        "entity framework",
+        "asp.net",
+        "c#",
+        ".net",
+        "postgres",
+    ):
+        if keyword in normalized:
+            score += 1
+    # Slight penalty for heading-like text.
+    if segment.isupper():
+        score -= 2
+    return score
+
+
+def _build_relevant_evidence_summary(text: str, skill: str, max_chars: int = 260) -> str:
+    segments = [_normalize_segment_prefix(seg) for seg in _split_text_segments(text)]
+    if not segments:
+        return _excerpt_around_skill(text, skill, max_len=max_chars, include_ellipsis=False)
+
+    ranked = sorted(
+        segments,
+        key=lambda seg: (_segment_relevance_score(seg, skill), -len(seg)),
+        reverse=True,
+    )
+
+    picked: list[str] = []
+    seen: set[str] = set()
+    for seg in ranked:
+        norm = _normalize(seg)
+        if norm in seen:
+            continue
+        if _segment_relevance_score(seg, skill) <= 0:
+            continue
+        candidate = " | ".join(picked + [seg]) if picked else seg
+        if len(candidate) <= max_chars:
+            picked.append(seg)
+            seen.add(norm)
+        if len(picked) >= 2:
+            break
+
+    if not picked:
+        return _excerpt_around_skill(text, skill, max_len=max_chars, include_ellipsis=False)
+
+    return " | ".join(picked)
 
 
 def _build_study_plan(prioritized_missing: list[tuple[str, float, str]]) -> list[StudyItem]:

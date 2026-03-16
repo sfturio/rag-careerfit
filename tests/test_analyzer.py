@@ -76,3 +76,18 @@ def test_study_plan_has_non_repeated_week_focus() -> None:
     focuses = [item.focus for item in result.study_plan]
     assert len(focuses) == 4
     assert len(set(focuses)) == 4
+
+
+def test_evidence_is_compact_and_skill_focused() -> None:
+    resume = (
+        "RESUMO Desenvolvedor backend com foco em Node.js e .NET. "
+        "TECHNICAL SKILLS Backend Node.js, Express.js, ASP.NET Core, REST APIs, "
+        "Database PostgreSQL, SQL, Entity Framework Core, Arquitetura em Camadas. "
+        "PROJECTS HubPay, ASP.NET Core, C#, PostgreSQL, Clean Architecture, REST API."
+    )
+    job = "Requisitos: C#, .NET, Entity Framework e APIs REST."
+    result = analyze_resume_vs_job(resume_text=resume, job_description=job, target_role="Backend .NET")
+    ef = next(item for item in result.skill_breakdown if item.skill == "entity framework")
+    assert ef.evidence is not None
+    assert len(ef.evidence) < 360
+    assert "entity framework" in ef.evidence.lower()
