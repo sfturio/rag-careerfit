@@ -24,7 +24,7 @@
     uploadNoFile: 'Nenhum arquivo selecionado ainda.',
     uploadSelectedPrefix: 'PDF selecionado:',
     resumeLabel: 'Texto do Curriculo',
-    resumePlaceholder: 'Cole o texto do curriculo aqui...',
+    resumePlaceholder: 'Se preferir, cole o texto do curriculo aqui. Se voce ja enviou PDF, pode deixar em branco.',
     jobLabel: 'Descricao da Vaga',
     jobPlaceholder: 'Cole aqui a descricao da vaga alvo...',
     strategy: 'Parametros de Estrategia',
