@@ -1,6 +1,75 @@
 const { randomUUID } = require("crypto");
 const { db } = require("../config/database");
 
+function safeParsePayload(row) {
+  if (!row?.payload_json) return null;
+  try {
+    return JSON.parse(row.payload_json);
+  } catch {
+    return null;
+  }
+}
+
+async function ensurePostgresColumns() {
+  const analysesColumns = [
+    { name: "target_role", type: "TEXT" },
+    { name: "match_score", type: "DOUBLE PRECISION" },
+    { name: "weighted_match_score", type: "DOUBLE PRECISION" },
+    { name: "payload_json", type: "TEXT" }
+  ];
+  for (const column of analysesColumns) {
+    await db.pool.query(`ALTER TABLE analyses ADD COLUMN IF NOT EXISTS ${column.name} ${column.type}`);
+  }
+
+  const feedbackColumns = [
+    { name: "created_at", type: "TEXT" },
+    { name: "message", type: "TEXT" }
+  ];
+  for (const column of feedbackColumns) {
+    await db.pool.query(`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS ${column.name} ${column.type}`);
+  }
+
+  await db.pool.query(`
+    UPDATE analyses
+    SET
+      weighted_match_score = COALESCE(weighted_match_score, match_score, 0),
+      payload_json = COALESCE(payload_json, '{}')
+  `);
+}
+
+function ensureSqliteColumns() {
+  const analysesColumns = new Set(
+    db.sqlite.prepare("PRAGMA table_info(analyses)").all().map((col) => col.name)
+  );
+  const analysesMissing = [
+    { name: "target_role", type: "TEXT" },
+    { name: "match_score", type: "REAL" },
+    { name: "weighted_match_score", type: "REAL" },
+    { name: "payload_json", type: "TEXT" }
+  ].filter((col) => !analysesColumns.has(col.name));
+  for (const col of analysesMissing) {
+    db.sqlite.exec(`ALTER TABLE analyses ADD COLUMN ${col.name} ${col.type}`);
+  }
+
+  const feedbackColumns = new Set(
+    db.sqlite.prepare("PRAGMA table_info(feedback)").all().map((col) => col.name)
+  );
+  const feedbackMissing = [
+    { name: "created_at", type: "TEXT" },
+    { name: "message", type: "TEXT" }
+  ].filter((col) => !feedbackColumns.has(col.name));
+  for (const col of feedbackMissing) {
+    db.sqlite.exec(`ALTER TABLE feedback ADD COLUMN ${col.name} ${col.type}`);
+  }
+
+  db.sqlite.exec(`
+    UPDATE analyses
+    SET
+      weighted_match_score = COALESCE(weighted_match_score, match_score, 0),
+      payload_json = COALESCE(payload_json, '{}')
+  `);
+}
+
 async function initAnalysisRepository() {
   const analysesDdl = `
     CREATE TABLE IF NOT EXISTS analyses (
@@ -23,9 +92,11 @@ async function initAnalysisRepository() {
   if (db.isPostgres) {
     await db.pool.query(analysesDdl);
     await db.pool.query(feedbackDdl);
+    await ensurePostgresColumns();
   } else {
     db.sqlite.exec(analysesDdl);
     db.sqlite.exec(feedbackDdl);
+    ensureSqliteColumns();
   }
 }
 
@@ -62,11 +133,19 @@ async function getAnalysisById(id) {
   }
   if (!row) return null;
 
+  const parsedPayload = safeParsePayload(row);
+  const payload = parsedPayload || {
+    matchScore: row.match_score ?? 0,
+    weightedMatchScore: row.weighted_match_score ?? row.match_score ?? 0,
+    reportMarkdown: row.report_markdown || "",
+    llm: { provider: "none", model: "none" }
+  };
+
   return {
     analysisId: row.id,
     createdAt: row.created_at,
     targetRole: row.target_role,
-    ...JSON.parse(row.payload_json)
+    ...payload
   };
 }
 
