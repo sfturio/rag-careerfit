@@ -6,112 +6,60 @@
     loading: false,
     error: '',
     result: null,
-    history: [],
-    lang: localStorage.getItem('rag_ui_lang') || 'en'
+    history: []
   };
 
-  const I18N = {
-    en: {
-      navOther: 'Check our other app:',
-      navOtherLink: 'ATSFlow Engine',
-      navMatch: 'Match Analysis',
-      navResult: 'Career Result',
-      navHistory: 'History',
-      newAnalysis: 'New Analysis',
-      heroBadge: 'RAGFlow Match Engine',
-      heroTitle: 'Understand how your resume matches real jobs',
-      heroSub: 'AI-first semantic analysis with deterministic transparency and actionable guidance.',
-      uploadTitle: 'Resume Context',
-      uploadBody: 'Click to upload or drag and drop PDF (up to 8MB)',
-      uploadNoFile: 'No file selected yet.',
-      uploadSelectedPrefix: 'Selected PDF:',
-      resumeLabel: 'Resume Text',
-      resumePlaceholder: 'Paste your resume text here...',
-      jobLabel: 'Job Description',
-      jobPlaceholder: 'Paste the target job description here...',
-      strategy: 'Strategy Parameters',
-      targetRole: 'Target Role',
-      targetRolePlaceholder: 'e.g. Senior AI Engineer',
-      step1: 'Resume loaded',
-      step2: 'Job context mapped',
-      step3: 'Semantic analysis',
-      run: 'Run Career Analysis',
-      running: 'Running analysis...',
-      previewTitle: 'Analysis Preview',
-      previewText: 'Skill match, gaps, evidence, and study plan generated in one pass.',
-      noResult: 'No result yet',
-      noResultSub: 'Run an analysis from Match Analysis first.',
-      backToMatch: 'Go to Match Analysis',
-      resultBadge: 'Career Result',
-      resultTitle: 'Match Quality Assessment',
-      weightedScore: 'Weighted Match',
-      insight: 'AI Insight',
-      download: 'Download Report',
-      skillsViz: 'Skill Match Visualization',
-      gaps: 'Gap Skills',
-      noGaps: 'No relevant gaps found.',
-      timeline: 'Study Plan Timeline',
-      strategic: 'Strategic Improvements',
-      historyTitle: 'History',
-      historySub: 'Minimal timeline of your previous analyses.',
-      open: 'Open',
-      emptyHistory: 'No analyses yet.',
-      model: 'Model',
-      provider: 'Provider',
-      errorLoad: 'Could not load data. Please try again.'
-    },
-    pt: {
-      navOther: 'Confira nosso outro app:',
-      navOtherLink: 'ATSFlow Engine',
-      navMatch: 'Analise de Match',
-      navResult: 'Resultado de Carreira',
-      navHistory: 'Historico',
-      newAnalysis: 'Nova Analise',
-      heroBadge: 'RAGFlow Match Engine',
-      heroTitle: 'Entenda como seu curriculo combina com vagas reais',
-      heroSub: 'Analise semantica AI-first com transparencia deterministica e orientacoes praticas.',
-      uploadTitle: 'Contexto do Curriculo',
-      uploadBody: 'Clique para enviar ou arraste PDF (ate 8MB)',
-      uploadNoFile: 'Nenhum arquivo selecionado ainda.',
-      uploadSelectedPrefix: 'PDF selecionado:',
-      resumeLabel: 'Texto do Curriculo',
-      resumePlaceholder: 'Cole o texto do curriculo aqui...',
-      jobLabel: 'Descricao da Vaga',
-      jobPlaceholder: 'Cole aqui a descricao da vaga alvo...',
-      strategy: 'Parametros de Estrategia',
-      targetRole: 'Cargo Alvo',
-      targetRolePlaceholder: 'ex.: Senior AI Engineer',
-      step1: 'Curriculo carregado',
-      step2: 'Contexto da vaga mapeado',
-      step3: 'Analise semantica',
-      run: 'Rodar Analise de Carreira',
-      running: 'Analisando...',
-      previewTitle: 'Previa da Analise',
-      previewText: 'Match de skills, gaps, evidencias e plano de estudo em um fluxo unico.',
-      noResult: 'Sem resultado ainda',
-      noResultSub: 'Rode uma analise na tela de Match primeiro.',
-      backToMatch: 'Ir para Analise de Match',
-      resultBadge: 'Resultado de Carreira',
-      resultTitle: 'Avaliacao de Match',
-      weightedScore: 'Match Ponderado',
-      insight: 'Insight de IA',
-      download: 'Baixar Relatorio',
-      skillsViz: 'Visualizacao de Match de Skills',
-      gaps: 'Skills em Gap',
-      noGaps: 'Nenhum gap relevante encontrado.',
-      timeline: 'Timeline de Estudo',
-      strategic: 'Melhorias Estrategicas',
-      historyTitle: 'Historico',
-      historySub: 'Linha do tempo minimalista das analises anteriores.',
-      open: 'Abrir',
-      emptyHistory: 'Nenhuma analise ainda.',
-      model: 'Modelo',
-      provider: 'Provider',
-      errorLoad: 'Nao foi possivel carregar os dados. Tente novamente.'
-    }
+  const UI_TEXT = {
+    navOther: 'Confira nosso outro app:',
+    navOtherLink: 'ATSFlow Engine',
+    navMatch: 'Analise de Match',
+    navResult: 'Resultado de Carreira',
+    navHistory: 'Historico',
+    newAnalysis: 'Nova Analise',
+    heroBadge: 'RAGFlow Analise de Match',
+    heroTitle: 'Entenda como seu curriculo combina com vagas reais',
+    heroSub: 'Analise semantica com transparencia deterministica e orientacoes praticas.',
+    uploadTitle: 'Contexto do Curriculo',
+    uploadBody: 'Clique para enviar ou arraste PDF (ate 8MB)',
+    uploadNoFile: 'Nenhum arquivo selecionado ainda.',
+    uploadSelectedPrefix: 'PDF selecionado:',
+    resumeLabel: 'Texto do Curriculo',
+    resumePlaceholder: 'Cole o texto do curriculo aqui...',
+    jobLabel: 'Descricao da Vaga',
+    jobPlaceholder: 'Cole aqui a descricao da vaga alvo...',
+    strategy: 'Parametros de Estrategia',
+    targetRole: 'Cargo Alvo',
+    targetRolePlaceholder: 'ex.: Engenheiro de Software Senior',
+    step1: 'Curriculo carregado',
+    step2: 'Contexto da vaga mapeado',
+    step3: 'Analise semantica',
+    run: 'Rodar Analise de Carreira',
+    running: 'Analisando...',
+    previewTitle: 'Previa da Analise',
+    previewText: 'Match de skills, gaps, evidencias e plano de estudo em um fluxo unico.',
+    noResult: 'Sem resultado ainda',
+    noResultSub: 'Rode uma analise na tela de Match primeiro.',
+    backToMatch: 'Ir para Analise de Match',
+    resultBadge: 'Resultado de Carreira',
+    resultTitle: 'Avaliacao de Match',
+    weightedScore: 'Match Ponderado',
+    insight: 'Insight de IA',
+    download: 'Baixar Relatorio',
+    skillsViz: 'Visualizacao de Match de Skills',
+    gaps: 'Skills em Gap',
+    noGaps: 'Nenhum gap relevante encontrado.',
+    timeline: 'Plano de Estudo',
+    strategic: 'Melhorias Estrategicas',
+    historyTitle: 'Historico',
+    historySub: 'Linha do tempo das analises anteriores.',
+    open: 'Abrir',
+    emptyHistory: 'Nenhuma analise ainda.',
+    model: 'Modelo',
+    provider: 'Provedor',
+    errorLoad: 'Nao foi possivel carregar os dados. Tente novamente.'
   };
 
-  const t = (key) => I18N[state.lang][key] || I18N.en[key] || key;
+  const t = (key) => UI_TEXT[key] || key;
 
   function clamp(val) {
     return Math.max(0, Math.min(100, Math.round(Number(val) || 0)));
@@ -247,7 +195,7 @@
         <div class="relative pl-10 pb-6">
           <div class="absolute left-0 top-0 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">${week}</div>
           <div class="absolute left-[13px] top-7 bottom-0 w-px bg-surface-container-high"></div>
-          <h4 class="text-sm font-bold">Week ${week}: ${escapeHtml(focus)}</h4>
+          <h4 class="text-sm font-bold">Semana ${week}: ${escapeHtml(focus)}</h4>
           <p class="text-xs text-on-surface-variant mt-1 leading-relaxed">${escapeHtml(action)}</p>
         </div>
       `;
@@ -271,7 +219,7 @@
             <span class="material-symbols-outlined">description</span>
           </div>
           <div class="min-w-0">
-            <p class="font-semibold truncate">${escapeHtml(item.targetRole || 'Untitled Analysis')}</p>
+            <p class="font-semibold truncate">${escapeHtml(item.targetRole || 'Analise sem titulo')}</p>
             <p class="text-xs text-on-surface-variant truncate">${escapeHtml(item.analysisId)}</p>
           </div>
         </div>
@@ -286,12 +234,6 @@
 
   function setPage(page) {
     state.page = page;
-    render();
-  }
-
-  function toggleLang() {
-    state.lang = state.lang === 'pt' ? 'en' : 'pt';
-    localStorage.setItem('rag_ui_lang', state.lang);
     render();
   }
 
@@ -398,7 +340,7 @@
 
           <div class="xl:col-span-4 space-y-6">
             <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm space-y-4">
-              <div class="text-xs uppercase tracking-[0.1em] font-bold text-on-surface-variant">Flow</div>
+              <div class="text-xs uppercase tracking-[0.1em] font-bold text-on-surface-variant">Fluxo</div>
               <div class="space-y-3">
                 ${ScoreCard(t('step1'), 100)}
                 ${ScoreCard(t('step2'), 66)}
@@ -444,7 +386,9 @@
 
     const skillBars = (r.skillBreakdown || [])
       .slice(0, 8)
-      .map((item) => SkillBar(item.skill, item.presentInResume ? 100 * (item.weight || 1) : 25, item.presentInResume ? 'match' : 'gap'))
+      .map((item) =>
+        SkillBar(item.skill, item.presentInResume ? 100 * (item.weight || 1) : 25, item.presentInResume ? 'aderente' : 'lacuna')
+      )
       .join('');
 
     const gaps = (r.missingSkills || [])
@@ -482,7 +426,7 @@
           <div class="lg:col-span-4">
             ${InsightCard(
               t('insight'),
-              `${t('provider')}: ${(r.llm && r.llm.provider) || 'none'} | ${t('model')}: ${(r.llm && r.llm.model) || 'none'}`
+              `${t('provider')}: ${(r.llm && r.llm.provider) || 'nenhum'} | ${t('model')}: ${(r.llm && r.llm.model) || 'nenhum'}`
             )}
           </div>
         </div>
@@ -543,9 +487,7 @@
     setText('side-nav-history', t('navHistory'));
     setText('new-analysis', t('newAnalysis'));
 
-    const translateBtn = document.getElementById('translate-btn');
-    if (translateBtn) translateBtn.textContent = state.lang === 'pt' ? 'EN' : 'PT';
-    document.documentElement.lang = state.lang === 'pt' ? 'pt-BR' : 'en';
+    document.documentElement.lang = 'pt-BR';
   }
 
   function bindEvents() {
@@ -580,12 +522,6 @@
 
     const goMatch = document.getElementById('go-match');
     if (goMatch) goMatch.addEventListener('click', () => setPage('match'));
-
-    const translateBtn = document.getElementById('translate-btn');
-    if (translateBtn && !translateBtn.dataset.bound) {
-      translateBtn.dataset.bound = '1';
-      translateBtn.addEventListener('click', toggleLang);
-    }
 
     const newAnalysis = document.getElementById('new-analysis');
     if (newAnalysis && !newAnalysis.dataset.bound) {

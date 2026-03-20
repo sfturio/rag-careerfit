@@ -38,7 +38,6 @@ async function runAnalysis({ resumeText, jobDescription, targetRole }) {
   const llmResponse = await generateText({
     systemPrompt: RAG_FEEDBACK_SYSTEM_PROMPT,
     userPrompt: buildRagFeedbackPrompt({
-      language: deterministic?.metadata?.language || "en",
       targetRole,
       matchedSkills: deterministic.matchedSkills,
       missingSkills: deterministic.missingSkills,

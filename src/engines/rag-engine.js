@@ -1,4 +1,4 @@
-const { normalizeText, clampScore, detectLanguage } = require("../utils/text-utils");
+const { normalizeText, clampScore } = require("../utils/text-utils");
 
 const SKILL_PATTERNS = {
   "c#": [/(\b|^)c#(\b|$)/i, /\bcsharp\b/i],
@@ -364,7 +364,7 @@ function buildReport({
 }
 
 function analyzeResumeVsJob({ resumeText, jobDescription, targetRole }) {
-  const language = detectLanguage(resumeText, jobDescription, targetRole || "");
+  const language = "pt";
 
   const requiredSkills = extractWeightedJobSkills(jobDescription);
   const skillBreakdown = buildSkillBreakdown(requiredSkills, resumeText, language);
