@@ -350,8 +350,8 @@
         <header class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
           <div class="lg:col-span-8 space-y-4">
             ${SectionBadge(t('heroBadge'))}
-            <h2 class="text-[2.75rem] leading-[1.06] tracking-[-0.02em] font-semibold max-w-4xl">${escapeHtml(t('heroTitle'))}</h2>
-            <p class="text-lg text-on-surface-variant max-w-3xl leading-relaxed">${escapeHtml(t('heroSub'))}</p>
+            <h2 class="text-[2.35rem] leading-[1.08] tracking-[-0.02em] font-semibold max-w-4xl">${escapeHtml(t('heroTitle'))}</h2>
+            <p class="text-base text-on-surface-variant max-w-3xl leading-relaxed">${escapeHtml(t('heroSub'))}</p>
           </div>
           <div class="lg:col-span-4 bg-surface-container-lowest rounded-2xl p-5 shadow-sm space-y-3">
             <div class="text-xs uppercase tracking-[0.1em] font-bold text-on-surface-variant">Flow</div>
@@ -396,7 +396,7 @@
               <p class="text-sm text-on-surface-variant leading-relaxed">${escapeHtml(t('previewText'))}</p>
             </div>
 
-            <button ${state.loading ? 'disabled' : ''} class="w-full py-4 rounded-2xl text-white font-bold text-lg bg-gradient-to-br from-primary to-primary-container shadow-ambient hover:opacity-95 transition-opacity disabled:opacity-50">
+            <button ${state.loading ? 'disabled' : ''} class="w-full py-3.5 rounded-2xl text-white font-bold text-base bg-gradient-to-br from-primary to-primary-container shadow-ambient hover:opacity-95 transition-opacity disabled:opacity-50">
               ${state.loading ? escapeHtml(t('running')) : escapeHtml(t('run'))}
             </button>
           </div>
@@ -492,8 +492,8 @@
     return `
       <section class="space-y-8">
         <header class="space-y-3">
-          <h2 class="text-[2.75rem] leading-[1.06] tracking-[-0.02em] font-semibold">${escapeHtml(t('historyTitle'))}</h2>
-          <p class="text-lg text-on-surface-variant">${escapeHtml(t('historySub'))}</p>
+          <h2 class="text-[2.35rem] leading-[1.08] tracking-[-0.02em] font-semibold">${escapeHtml(t('historyTitle'))}</h2>
+          <p class="text-base text-on-surface-variant">${escapeHtml(t('historySub'))}</p>
         </header>
 
         ${
