@@ -62,19 +62,20 @@
     provider: 'Provedor',
     errorLoad: 'Nao foi possivel carregar os dados. Tente novamente.',
     aboutTitle: 'Sobre o RAGFlow Engine',
-    aboutSubtitle: 'Resumo rapido de como o app avalia aderencia semantica entre curriculo e vaga.',
+    aboutSubtitle:
+      'Veja como o RAGFlow analisa a compatibilidade entre seu curriculo e oportunidades reais usando inteligencia semantica.',
     aboutWhatIsTitle: 'O que este app faz',
     aboutWhatIsBody:
-      'O RAGFlow compara curriculo e descricao de vaga com analise semantica, identifica skills aderentes e lacunas, e transforma isso em orientacoes praticas para posicionamento de carreira.',
+      'O RAGFlow avalia o nivel de aderencia entre seu perfil profissional e a descricao de uma vaga, identificando competencias alinhadas, lacunas relevantes e oportunidades de melhoria. O sistema transforma essa analise em recomendacoes praticas para fortalecer seu posicionamento no mercado.',
     aboutHowTitle: 'Como a analise funciona',
     aboutHowBody:
-      'A base combina regras deterministicas (extracao de sinais, pesos e match explicavel) com assistencia de IA para sintese e recomendacoes. Assim, o resultado fica mais util sem virar caixa-preta.',
+      'A engine combina processamento semantico, recuperacao contextual de informacoes e regras deterministicas para gerar resultados explicaveis. Isso permite um diagnostico mais inteligente do que simples comparacao por palavras-chave.',
     aboutLimitsTitle: 'Limites importantes',
     aboutLimitsBody:
-      'Os scores sao referenciais, nao garantias de aprovacao. Cada processo seletivo usa criterios proprios, por isso o ideal e usar o resultado como guia para melhorar clareza e foco.',
+      'Os resultados servem como orientacao estrategica e nao garantem aprovacao em processos seletivos. Cada empresa possui criterios proprios, portanto o ideal e usar o feedback como base para ajustes continuos no curriculo e no plano de carreira.',
     aboutTechTitle: 'Base tecnica',
     aboutTechBody:
-      'Backend em Node.js + Express, persistencia em SQLite/Postgres, parser de PDF e fallback de LLM (Groq -> Ollama -> fluxo deterministico). Se IA indisponivel, a analise principal continua.'
+      'Desenvolvido com arquitetura moderna em Node.js e pipeline de analise baseado em RAG (Retrieval-Augmented Generation), o sistema integra parsing de documentos, vetorizacao semantica e fallback resiliente de modelos de IA para manter consistencia mesmo em cenarios adversos.'
   };
 
   const t = (key) => UI_TEXT[key] || key;
