@@ -8,6 +8,8 @@ services:
     startCommand: npm start
     healthCheckPath: /health
     envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
       - key: LLM_PROVIDER
         value: groq
       - key: GROQ_MODEL
