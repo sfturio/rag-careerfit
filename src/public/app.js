@@ -381,6 +381,7 @@
       if (file) {
         const payload = new FormData();
         payload.append('resume_pdf', file);
+        payload.append('resume_text', resumeText);
         payload.append('job_description', jobDescription);
         payload.append('target_role', targetRole);
         response = await fetch('/api/v1/analyze/pdf', { method: 'POST', body: payload });

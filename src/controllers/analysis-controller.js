@@ -32,7 +32,20 @@ async function analyzePdf(req, res, next) {
   try {
     if (!req.file) return res.status(400).json({ error: "resume_pdf is required" });
 
-    const resumeText = await extractTextFromPdf(req.file.buffer);
+    const extractedResumeText = await extractTextFromPdf(req.file.buffer);
+    const manualResumeText = (req.body.resume_text || "").trim();
+    const resumeText =
+      extractedResumeText.length >= 80
+        ? extractedResumeText
+        : `${extractedResumeText}\n${manualResumeText}`.trim();
+
+    if (resumeText.length < 30) {
+      return res.status(400).json({
+        error:
+          "Nao foi possivel extrair texto suficiente do PDF. Envie um PDF com texto selecionavel ou preencha o campo de curriculo em texto."
+      });
+    }
+
     const payload = {
       resume_text: resumeText,
       job_description: req.body.job_description,
