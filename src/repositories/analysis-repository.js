@@ -1,5 +1,6 @@
 const { randomUUID } = require("crypto");
 const { db } = require("../config/database");
+let postgresAnalysesSchemaCache = null;
 
 function safeParsePayload(row) {
   if (!row?.payload_json) return null;
@@ -70,6 +71,59 @@ function ensureSqliteColumns() {
   `);
 }
 
+function quoteIdentifier(value) {
+  return `"${String(value).replaceAll('"', '""')}"`;
+}
+
+async function getPostgresAnalysesSchema() {
+  if (postgresAnalysesSchemaCache) return postgresAnalysesSchemaCache;
+  const result = await db.pool.query(
+    `SELECT column_name, is_nullable, data_type, udt_name, column_default
+     FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'analyses'
+     ORDER BY ordinal_position`
+  );
+  postgresAnalysesSchemaCache = result.rows;
+  return postgresAnalysesSchemaCache;
+}
+
+function baseAnalysisRow({ id, createdAt, targetRole, payloadJson, result }) {
+  return {
+    id,
+    created_at: createdAt,
+    target_role: targetRole,
+    match_score: result.matchScore ?? 0,
+    weighted_match_score: result.weightedMatchScore ?? result.matchScore ?? 0,
+    payload_json: payloadJson,
+    matched_skills_json: JSON.stringify(result.matchedSkills || []),
+    missing_skills_json: JSON.stringify(result.missingSkills || []),
+    study_plan_json: JSON.stringify(result.studyPlan || []),
+    resume_optimization_suggestions_json: JSON.stringify(result.resumeOptimizationSuggestions || []),
+    skill_breakdown_json: JSON.stringify(result.skillBreakdown || []),
+    report_markdown: result.reportMarkdown || "",
+    metadata_json: JSON.stringify(result.metadata || {}),
+    llm_json: JSON.stringify(result.llm || { provider: "none", model: "none" }),
+    synthesized_summary: result.synthesizedSummary || null
+  };
+}
+
+function fallbackValueForRequiredColumn(column, context) {
+  const colName = String(column.column_name || "");
+  const dataType = String(column.data_type || "").toLowerCase();
+  const udtName = String(column.udt_name || "").toLowerCase();
+  if (colName === "id") return context.id;
+  if (colName === "created_at") return context.createdAt;
+  if (colName === "target_role") return context.targetRole || "";
+
+  if (dataType.includes("json") || udtName.includes("json")) return "{}";
+  if (dataType.includes("character") || dataType === "text") return "";
+  if (dataType.includes("timestamp") || dataType === "date") return context.createdAt;
+  if (dataType === "boolean") return false;
+  if (dataType.includes("int") || dataType.includes("numeric") || dataType.includes("double") || dataType.includes("real")) return 0;
+  if (udtName === "uuid") return context.id;
+  return null;
+}
+
 async function initAnalysisRepository() {
   const analysesDdl = `
     CREATE TABLE IF NOT EXISTS analyses (
@@ -106,11 +160,22 @@ async function saveAnalysis(result, targetRole = null) {
   const payloadJson = JSON.stringify(result);
 
   if (db.isPostgres) {
-    await db.pool.query(
-      `INSERT INTO analyses (id, created_at, target_role, match_score, weighted_match_score, payload_json)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [id, createdAt, targetRole, result.matchScore, result.weightedMatchScore, payloadJson]
-    );
+    const schema = await getPostgresAnalysesSchema();
+    const rowData = baseAnalysisRow({ id, createdAt, targetRole, payloadJson, result });
+
+    for (const column of schema) {
+      const name = column.column_name;
+      if (Object.prototype.hasOwnProperty.call(rowData, name)) continue;
+      const isRequired = column.is_nullable === "NO" && !column.column_default;
+      if (!isRequired) continue;
+      rowData[name] = fallbackValueForRequiredColumn(column, { id, createdAt, targetRole });
+    }
+
+    const insertColumns = schema.map((col) => col.column_name).filter((name) => Object.prototype.hasOwnProperty.call(rowData, name));
+    const insertValues = insertColumns.map((name) => rowData[name]);
+    const placeholders = insertColumns.map((_, idx) => `$${idx + 1}`).join(", ");
+    const sql = `INSERT INTO analyses (${insertColumns.map(quoteIdentifier).join(", ")}) VALUES (${placeholders})`;
+    await db.pool.query(sql, insertValues);
   } else {
     db.sqlite
       .prepare(
