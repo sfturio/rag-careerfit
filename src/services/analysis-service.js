@@ -13,6 +13,21 @@ const {
 
 function applyLlmAssist(baseResult, llmText) {
   if (!llmText) return baseResult;
+
+  const normalizeSummary = (value) =>
+    String(value || "")
+      .replace(/[*_`>#]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const isMeaningfulSummary = (value) => {
+    const clean = normalizeSummary(value).replace(/:$/, "").trim();
+    if (!clean) return false;
+    if (/^s[ií]ntese$/i.test(clean)) return false;
+    if (/^resumo$/i.test(clean)) return false;
+    return true;
+  };
+
   const lines = llmText
     .split("\n")
     .map((line) => line.trim())
@@ -20,7 +35,7 @@ function applyLlmAssist(baseResult, llmText) {
     .filter((line) => !/^#{1,6}\s/.test(line));
   if (!lines.length) return baseResult;
 
-  const summaryLine = lines.find((line) => !line.startsWith("-")) || "";
+  const summaryLine = lines.find((line) => !line.startsWith("-") && isMeaningfulSummary(line)) || "";
   const extraSuggestions = lines
     .filter((line) => line.startsWith("-"))
     .map((line) => line.replace(/^-+\s*/, ""));

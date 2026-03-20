@@ -1,4 +1,5 @@
 const { extractTextFromPdf } = require("../helpers/pdf-helper");
+const { createReportPdfBuffer } = require("../helpers/report-pdf-helper");
 const {
   createFeedback,
   getAnalyses,
@@ -85,8 +86,20 @@ async function getReport(req, res, next) {
   try {
     const result = await getAnalysisById(req.params.id);
     if (!result) return res.status(404).json({ error: "Analysis not found" });
-    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
-    return res.send(result.reportMarkdown);
+    const safeRole = String(result.targetRole || "career-report")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 48);
+    const filename = `ragflow-${safeRole || "career-report"}-${String(result.analysisId || "report").slice(0, 8)}.pdf`;
+    const pdfBuffer = await createReportPdfBuffer({
+      title: `RAGFlow Report - ${result.targetRole || "Career Analysis"}`,
+      markdown: result.reportMarkdown || ""
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.send(pdfBuffer);
   } catch (errorCaught) {
     return next(errorCaught);
   }

@@ -188,6 +188,19 @@
       .replaceAll("'", '&#39;');
   }
 
+  function getDisplaySummary(value) {
+    const clean = String(value || '')
+      .replace(/[*_`>#]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/:$/, '')
+      .trim();
+    if (!clean) return '';
+    if (/^s[ií]ntese$/i.test(clean)) return '';
+    if (/^resumo$/i.test(clean)) return '';
+    return clean;
+  }
+
   function SectionBadge(text) {
     return `<span class="inline-flex px-3 py-1 rounded-full text-[11px] uppercase tracking-[0.12em] font-bold bg-primary-fixed text-primary">${escapeHtml(text)}</span>`;
   }
@@ -483,6 +496,7 @@
     }
 
     const r = state.result;
+    const summaryText = getDisplaySummary(r.synthesizedSummary);
     const score = clamp(r.weightedMatchScore || r.matchScore || 0);
     const circumference = 2 * Math.PI * 86;
     const offset = circumference - (score / 100) * circumference;
@@ -510,7 +524,7 @@
               <div class="space-y-4">
                 ${SectionBadge(t('resultBadge'))}
                 <h2 class="text-4xl leading-tight font-semibold tracking-[-0.02em]">${escapeHtml(t('resultTitle'))}</h2>
-                <p class="text-on-surface-variant leading-relaxed">${escapeHtml(r.synthesizedSummary || '')}</p>
+                ${summaryText ? `<p class="text-on-surface-variant leading-relaxed">${escapeHtml(summaryText)}</p>` : ''}
                 <a href="/api/v1/analyses/${escapeHtml(r.analysisId)}/report" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-white font-semibold bg-gradient-to-br from-primary to-primary-container shadow-ambient">${escapeHtml(t('download'))}<span class="material-symbols-outlined text-base">download</span></a>
               </div>
               <div class="relative w-52 h-52">
