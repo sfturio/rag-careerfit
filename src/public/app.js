@@ -143,7 +143,7 @@
       <label class="block bg-surface-container-low rounded-2xl p-6 cursor-pointer">
         <span class="block text-sm font-semibold mb-4">${escapeHtml(t('uploadTitle'))}</span>
         <input type="file" name="resume_pdf" accept=".pdf" class="hidden" />
-        <div class="min-h-[220px] rounded-xl2 border-2 border-dashed border-outline-variant/40 bg-surface-container-lowest flex flex-col items-center justify-center text-center px-6 hover:bg-primary-fixed/30 transition-colors">
+        <div class="min-h-[240px] rounded-xl2 border-2 border-dashed border-outline-variant/40 bg-surface-container-lowest flex flex-col items-center justify-center text-center px-8 py-8 hover:bg-primary-fixed/30 transition-colors">
           <div class="w-16 h-16 rounded-full bg-primary-fixed text-primary flex items-center justify-center mb-4">
             <span class="material-symbols-outlined text-3xl">upload_file</span>
           </div>
@@ -346,14 +346,21 @@
 
   function MatchPage() {
     return `
-      <section class="space-y-6">
-        <header class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div class="lg:col-span-8 space-y-4">
+      <section class="space-y-8">
+        ${
+          state.error
+            ? `<div class="rounded-xl p-4 bg-[#ffdad6] text-[#93000a] font-semibold">${escapeHtml(state.error)}</div>`
+            : ''
+        }
+
+        <form id="match-form" class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <div class="xl:col-span-8 space-y-4">
             ${SectionBadge(t('heroBadge'))}
             <h2 class="text-[2.35rem] leading-[1.08] tracking-[-0.02em] font-semibold max-w-4xl">${escapeHtml(t('heroTitle'))}</h2>
             <p class="text-base text-on-surface-variant max-w-3xl leading-relaxed">${escapeHtml(t('heroSub'))}</p>
           </div>
-          <div class="lg:col-span-4 bg-surface-container-lowest rounded-2xl p-5 shadow-sm space-y-3">
+
+          <div class="xl:col-span-4 bg-surface-container-lowest rounded-2xl p-6 shadow-sm space-y-4">
             <div class="text-xs uppercase tracking-[0.1em] font-bold text-on-surface-variant">Flow</div>
             <div class="space-y-3">
               ${ScoreCard(t('step1'), 100)}
@@ -361,21 +368,13 @@
               ${ScoreCard(t('step3'), 33)}
             </div>
           </div>
-        </header>
 
-        ${
-          state.error
-            ? `<div class="rounded-xl p-4 bg-[#ffdad6] text-[#93000a] font-semibold">${escapeHtml(state.error)}</div>`
-            : ''
-        }
-
-        <form id="match-form" class="grid grid-cols-1 xl:grid-cols-12 gap-8">
-          <div class="xl:col-span-7 space-y-6">
+          <div class="xl:col-span-8 space-y-6">
             ${UploadCard()}
 
             <div class="bg-surface-container-low rounded-2xl p-6">
               <label class="block text-sm font-semibold mb-3">${escapeHtml(t('resumeLabel'))}</label>
-              <textarea name="resume_text" class="w-full h-64 bg-surface-container-lowest border-none rounded-xl2 focus:ring-2 focus:ring-primary/20 p-4 resize-none" placeholder="${escapeHtml(t('resumePlaceholder'))}"></textarea>
+              <textarea name="resume_text" class="w-full h-56 bg-surface-container-lowest border-none rounded-xl2 focus:ring-2 focus:ring-primary/20 p-4 resize-none" placeholder="${escapeHtml(t('resumePlaceholder'))}"></textarea>
             </div>
 
             <div class="bg-surface-container-low rounded-2xl p-6">
@@ -384,7 +383,7 @@
             </div>
           </div>
 
-          <div class="xl:col-span-5 space-y-6">
+          <div class="xl:col-span-4 space-y-6">
             <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm">
               <h3 class="text-base font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary">target</span>${escapeHtml(t('strategy'))}</h3>
               <label class="block text-xs uppercase tracking-[0.08em] font-bold text-on-surface-variant mb-2">${escapeHtml(t('targetRole'))}</label>
