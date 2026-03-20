@@ -2,6 +2,14 @@
 __pycache__/
 .pytest_cache/
 *.pyc
-data/
 stitch_exports/
 rag_careerfit_engine.egg-info/
+node_modules/
+.env
+uploads/*
+!uploads/.gitkeep
+reports/*
+!reports/.gitkeep
+data/*.db
+data/*.db-wal
+data/*.db-shm
