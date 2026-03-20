@@ -1,4 +1,4 @@
-const { normalizeText, clampScore } = require("../utils/text-utils");
+const { normalizeText, clampScore, extractKeywords, detectLanguage } = require("../utils/text-utils");
 
 const SKILL_PATTERNS = {
   "c#": [/(\b|^)c#(\b|$)/i, /\bcsharp\b/i],
@@ -25,11 +25,55 @@ const SKILL_PATTERNS = {
 const SECTION_WEIGHTS = {
   requisitos: { normalized: "requisitos", weight: 1.0 },
   requirements: { normalized: "requisitos", weight: 1.0 },
+  responsibility: { normalized: "atribuicoes", weight: 0.85 },
+  responsibilities: { normalized: "atribuicoes", weight: 0.85 },
   responsabilidades: { normalized: "atribuicoes", weight: 0.85 },
   atribuicoes: { normalized: "atribuicoes", weight: 0.85 },
   diferenciais: { normalized: "diferenciais", weight: 0.55 },
   "nice to have": { normalized: "diferenciais", weight: 0.55 }
 };
+
+const ROLE_HINT_SKILLS = [
+  {
+    patterns: [/\bbackend developer\b/i, /\bbackend engineer\b/i, /\bdesenvolvedor backend\b/i, /\bengenheiro backend\b/i],
+    skills: ["rest api", "sql", "docker", "ci/cd"]
+  },
+  {
+    patterns: [/\bfull[- ]?stack developer\b/i, /\bfull[- ]?stack engineer\b/i, /\bdesenvolvedor full[- ]?stack\b/i],
+    skills: ["rest api", "sql", "docker", "github actions"]
+  },
+  {
+    patterns: [/\bdevops engineer\b/i, /\bengenheiro devops\b/i],
+    skills: ["docker", "kubernetes", "aws", "ci/cd"]
+  }
+];
+
+const GENERIC_KEYWORD_BLOCKLIST = new Set([
+  "backend",
+  "developer",
+  "engineer",
+  "software",
+  "senior",
+  "junior",
+  "pleno",
+  "vaga",
+  "role",
+  "team",
+  "experience",
+  "anos",
+  "years",
+  "empresa",
+  "company",
+  "projeto",
+  "project",
+  "remote",
+  "remoto",
+  "hibrido",
+  "hybrid",
+  "fulltime",
+  "tempo",
+  "integral"
+]);
 
 const RESOURCES_BY_SKILL = {
   ".net": ["Microsoft Learn - .NET", ".NET documentation"],
@@ -138,7 +182,60 @@ function extractSkills(text = "") {
   return Object.keys(SKILL_PATTERNS).filter((skill) => hasSkill(normalized, skill));
 }
 
-function extractWeightedJobSkills(jobDescription = "") {
+function extractRoleHintSkills(jobDescription = "", targetRole = "") {
+  const source = `${jobDescription}\n${targetRole}`.trim();
+  if (!source) return [];
+
+  const found = new Set();
+  for (const hint of ROLE_HINT_SKILLS) {
+    if (hint.patterns.some((pattern) => pattern.test(source))) {
+      for (const skill of hint.skills) found.add(skill);
+    }
+  }
+  return [...found];
+}
+
+function extractKeywordFallbackSkills(jobDescription = "", targetRole = "") {
+  const raw = extractKeywords(`${jobDescription}\n${targetRole}`, 30);
+  return raw
+    .filter((token) => token.length >= 3)
+    .filter((token) => !GENERIC_KEYWORD_BLOCKLIST.has(token))
+    .slice(0, 10);
+}
+
+function extractOverlapSkills(jobDescription = "", resumeText = "", targetRole = "") {
+  const jobKeywords = new Set(extractKeywordFallbackSkills(jobDescription, targetRole));
+  const resumeKeywords = new Set(extractKeywords(resumeText, 80));
+  const overlap = [];
+
+  for (const token of jobKeywords) {
+    if (resumeKeywords.has(token)) overlap.push(token);
+  }
+
+  return overlap.slice(0, 8);
+}
+
+function chooseOutputLanguage({ resumeText = "", jobDescription = "", targetRole = "" }) {
+  const detected = detectLanguage(resumeText, jobDescription, targetRole);
+  if (detected !== "en") return "pt";
+
+  const source = normalizeText(`${jobDescription} ${targetRole}`);
+  const englishSignals = [
+    "backend developer",
+    "backend engineer",
+    "requirements",
+    "responsibilities",
+    "nice to have",
+    "must have",
+    "full stack",
+    "cloud",
+    "microservices"
+  ];
+  const enHits = englishSignals.filter((signal) => source.includes(signal)).length;
+  return enHits >= 2 ? "en" : "pt";
+}
+
+function extractWeightedJobSkills(jobDescription = "", targetRole = "") {
   const lines = jobDescription.split("\n").map((line) => line.trim()).filter(Boolean);
   const weighted = new Map();
   let sectionName = "geral";
@@ -165,6 +262,20 @@ function extractWeightedJobSkills(jobDescription = "") {
   if (!weighted.size) {
     for (const skill of extractSkills(jobDescription).slice(0, 8)) {
       weighted.set(skill, { weight: 1.0, section: "geral" });
+    }
+  }
+
+  const roleHintSkills = extractRoleHintSkills(jobDescription, targetRole);
+  for (const skill of roleHintSkills) {
+    if (!weighted.has(skill)) {
+      weighted.set(skill, { weight: 0.65, section: "geral" });
+    }
+  }
+
+  if (!weighted.size) {
+    const keywordSkills = extractKeywordFallbackSkills(jobDescription, targetRole);
+    for (const skill of keywordSkills) {
+      weighted.set(skill, { weight: 0.6, section: "geral" });
     }
   }
 
@@ -364,9 +475,22 @@ function buildReport({
 }
 
 function analyzeResumeVsJob({ resumeText, jobDescription, targetRole }) {
-  const language = "pt";
+  const language = chooseOutputLanguage({ resumeText, jobDescription, targetRole });
 
-  const requiredSkills = extractWeightedJobSkills(jobDescription);
+  const requiredSkills = extractWeightedJobSkills(jobDescription, targetRole);
+  const overlapSkills = extractOverlapSkills(jobDescription, resumeText, targetRole);
+  for (const skill of overlapSkills) {
+    if (!requiredSkills.some((item) => item.skill === skill)) {
+      requiredSkills.push({ skill, weight: 0.5, sourceSection: "geral" });
+    }
+  }
+
+  if (!requiredSkills.length) {
+    const resumeFallback = extractKeywords(resumeText, 10).filter((token) => !GENERIC_KEYWORD_BLOCKLIST.has(token));
+    for (const skill of resumeFallback) {
+      requiredSkills.push({ skill, weight: 0.35, sourceSection: "geral" });
+    }
+  }
   const skillBreakdown = buildSkillBreakdown(requiredSkills, resumeText, language);
   const matchedSkills = skillBreakdown.filter((item) => item.presentInResume).map((item) => item.skill);
   const missingSkills = skillBreakdown.filter((item) => !item.presentInResume).map((item) => item.skill);
