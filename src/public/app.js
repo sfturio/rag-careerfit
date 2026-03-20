@@ -18,6 +18,7 @@
     navMatch: 'Analise de Match',
     navResult: 'Resultado de Carreira',
     navHistory: 'Historico',
+    navAbout: 'Sobre',
     newAnalysis: 'Nova Analise',
     heroBadge: 'RAGFlow Analise de Match',
     heroTitle: 'Entenda como seu curriculo combina com vagas reais',
@@ -59,7 +60,21 @@
     emptyHistory: 'Nenhuma analise ainda.',
     model: 'Modelo',
     provider: 'Provedor',
-    errorLoad: 'Nao foi possivel carregar os dados. Tente novamente.'
+    errorLoad: 'Nao foi possivel carregar os dados. Tente novamente.',
+    aboutTitle: 'Sobre o RAGFlow Engine',
+    aboutSubtitle: 'Resumo rapido de como o app avalia aderencia semantica entre curriculo e vaga.',
+    aboutWhatIsTitle: 'O que este app faz',
+    aboutWhatIsBody:
+      'O RAGFlow compara curriculo e descricao de vaga com analise semantica, identifica skills aderentes e lacunas, e transforma isso em orientacoes praticas para posicionamento de carreira.',
+    aboutHowTitle: 'Como a analise funciona',
+    aboutHowBody:
+      'A base combina regras deterministicas (extracao de sinais, pesos e match explicavel) com assistencia de IA para sintese e recomendacoes. Assim, o resultado fica mais util sem virar caixa-preta.',
+    aboutLimitsTitle: 'Limites importantes',
+    aboutLimitsBody:
+      'Os scores sao referenciais, nao garantias de aprovacao. Cada processo seletivo usa criterios proprios, por isso o ideal e usar o resultado como guia para melhorar clareza e foco.',
+    aboutTechTitle: 'Base tecnica',
+    aboutTechBody:
+      'Backend em Node.js + Express, persistencia em SQLite/Postgres, parser de PDF e fallback de LLM (Groq -> Ollama -> fluxo deterministico). Se IA indisponivel, a analise principal continua.'
   };
 
   const t = (key) => UI_TEXT[key] || key;
@@ -560,6 +575,36 @@
     `;
   }
 
+  function AboutPage() {
+    return `
+      <section class="space-y-8">
+        <header class="space-y-3">
+          <h2 class="text-[2.35rem] leading-[1.08] tracking-[-0.02em] font-semibold">${escapeHtml(t('aboutTitle'))}</h2>
+          <p class="text-base text-on-surface-variant max-w-3xl">${escapeHtml(t('aboutSubtitle'))}</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <article class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm space-y-3">
+            <h3 class="text-xl font-bold">${escapeHtml(t('aboutWhatIsTitle'))}</h3>
+            <p class="text-on-surface-variant leading-relaxed">${escapeHtml(t('aboutWhatIsBody'))}</p>
+          </article>
+          <article class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm space-y-3">
+            <h3 class="text-xl font-bold">${escapeHtml(t('aboutHowTitle'))}</h3>
+            <p class="text-on-surface-variant leading-relaxed">${escapeHtml(t('aboutHowBody'))}</p>
+          </article>
+          <article class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm space-y-3">
+            <h3 class="text-xl font-bold">${escapeHtml(t('aboutLimitsTitle'))}</h3>
+            <p class="text-on-surface-variant leading-relaxed">${escapeHtml(t('aboutLimitsBody'))}</p>
+          </article>
+          <article class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm space-y-3">
+            <h3 class="text-xl font-bold">${escapeHtml(t('aboutTechTitle'))}</h3>
+            <p class="text-on-surface-variant leading-relaxed">${escapeHtml(t('aboutTechBody'))}</p>
+          </article>
+        </div>
+      </section>
+    `;
+  }
+
   function syncChromeText() {
     const setText = (id, value) => {
       const node = document.getElementById(id);
@@ -571,6 +616,7 @@
     setText('side-nav-match', t('navMatch'));
     setText('side-nav-result', t('navResult'));
     setText('side-nav-history', t('navHistory'));
+    setText('side-nav-about', t('navAbout'));
     setText('new-analysis', t('newAnalysis'));
 
     document.documentElement.lang = 'pt-BR';
@@ -695,6 +741,7 @@
     if (state.page === 'match') app.innerHTML = MatchPage();
     if (state.page === 'result') app.innerHTML = ResultPage();
     if (state.page === 'history') app.innerHTML = HistoryPage();
+    if (state.page === 'about') app.innerHTML = AboutPage();
     syncChromeText();
     renderSupportUi();
     bindEvents();
