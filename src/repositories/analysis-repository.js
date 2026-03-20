@@ -2,7 +2,7 @@ const { randomUUID } = require("crypto");
 const { db } = require("../config/database");
 
 async function initAnalysisRepository() {
-  const ddl = `
+  const analysesDdl = `
     CREATE TABLE IF NOT EXISTS analyses (
       id TEXT PRIMARY KEY,
       created_at TEXT NOT NULL,
@@ -12,11 +12,20 @@ async function initAnalysisRepository() {
       payload_json TEXT NOT NULL
     )
   `;
+  const feedbackDdl = `
+    CREATE TABLE IF NOT EXISTS feedback (
+      id TEXT PRIMARY KEY,
+      created_at TEXT NOT NULL,
+      message TEXT NOT NULL
+    )
+  `;
 
   if (db.isPostgres) {
-    await db.pool.query(ddl);
+    await db.pool.query(analysesDdl);
+    await db.pool.query(feedbackDdl);
   } else {
-    db.sqlite.exec(ddl);
+    db.sqlite.exec(analysesDdl);
+    db.sqlite.exec(feedbackDdl);
   }
 }
 
@@ -92,9 +101,32 @@ async function listAnalyses(limit = 20) {
   }));
 }
 
+async function saveFeedback(message) {
+  const id = randomUUID();
+  const createdAt = new Date().toISOString();
+
+  if (db.isPostgres) {
+    await db.pool.query(
+      `INSERT INTO feedback (id, created_at, message)
+       VALUES ($1, $2, $3)`,
+      [id, createdAt, message]
+    );
+  } else {
+    db.sqlite
+      .prepare(
+        `INSERT INTO feedback (id, created_at, message)
+         VALUES (?, ?, ?)`
+      )
+      .run(id, createdAt, message);
+  }
+
+  return { id, createdAt };
+}
+
 module.exports = {
   getAnalysisById,
   initAnalysisRepository,
   listAnalyses,
-  saveAnalysis
+  saveAnalysis,
+  saveFeedback
 };

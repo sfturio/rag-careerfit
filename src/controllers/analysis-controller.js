@@ -1,5 +1,10 @@
 const { extractTextFromPdf } = require("../helpers/pdf-helper");
-const { getAnalyses, getAnalysisById, runAnalysis } = require("../services/analysis-service");
+const {
+  createFeedback,
+  getAnalyses,
+  getAnalysisById,
+  runAnalysis
+} = require("../services/analysis-service");
 
 function validateAnalyzeInput(body) {
   const resumeText = (body.resume_text || "").trim();
@@ -74,10 +79,24 @@ async function getReport(req, res, next) {
   }
 }
 
+async function submitFeedback(req, res, next) {
+  try {
+    const message = (req.body?.message || "").trim();
+    if (message.length < 3) {
+      return res.status(400).json({ error: "message deve ter pelo menos 3 caracteres" });
+    }
+    const saved = await createFeedback(message);
+    return res.status(201).json({ ok: true, feedbackId: saved.id, createdAt: saved.createdAt });
+  } catch (errorCaught) {
+    return next(errorCaught);
+  }
+}
+
 module.exports = {
   analyze,
   analyzePdf,
   getHistoryItem,
   getReport,
-  listHistory
+  listHistory,
+  submitFeedback
 };

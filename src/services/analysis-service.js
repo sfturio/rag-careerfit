@@ -2,7 +2,8 @@ const { analyzeResumeVsJob } = require("../engines/rag-engine");
 const {
   getAnalysisById,
   listAnalyses,
-  saveAnalysis
+  saveAnalysis,
+  saveFeedback
 } = require("../repositories/analysis-repository");
 const { generateText } = require("../lib/llm");
 const {
@@ -61,8 +62,13 @@ async function getAnalyses(limit = 20) {
   return listAnalyses(limit);
 }
 
+async function createFeedback(message) {
+  return saveFeedback(message);
+}
+
 module.exports = {
   getAnalysisById,
   getAnalyses,
-  runAnalysis
+  runAnalysis,
+  createFeedback
 };

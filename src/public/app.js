@@ -659,13 +659,28 @@
 
     const sendFeedback = document.getElementById('send-feedback');
     if (sendFeedback) {
-      sendFeedback.addEventListener('click', () => {
+      sendFeedback.addEventListener('click', async () => {
         const feedback = (state.feedbackText || '').trim();
         if (!feedback) return;
-        console.log('[RAGFlow Feedback]', feedback);
-        state.feedbackText = '';
-        state.feedbackOpen = false;
-        render();
+        try {
+          sendFeedback.disabled = true;
+          sendFeedback.textContent = 'Enviando...';
+          const response = await fetch('/api/v1/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: feedback })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Nao foi possivel enviar feedback.');
+          state.feedbackText = '';
+          state.feedbackOpen = false;
+          render();
+        } catch (error) {
+          console.error('[RAGFlow Feedback Error]', error.message);
+        } finally {
+          sendFeedback.disabled = false;
+          sendFeedback.textContent = 'Enviar Feedback';
+        }
       });
     }
 
