@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ragflow-engine
+    name: ragflowengine
     runtime: node
     plan: free
     autoDeploy: true
