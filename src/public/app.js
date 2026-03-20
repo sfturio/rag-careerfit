@@ -23,6 +23,8 @@
       heroSub: 'AI-first semantic analysis with deterministic transparency and actionable guidance.',
       uploadTitle: 'Resume Context',
       uploadBody: 'Click to upload or drag and drop PDF (up to 8MB)',
+      uploadNoFile: 'No file selected yet.',
+      uploadSelectedPrefix: 'Selected PDF:',
       resumeLabel: 'Resume Text',
       resumePlaceholder: 'Paste your resume text here...',
       jobLabel: 'Job Description',
@@ -70,6 +72,8 @@
       heroSub: 'Analise semantica AI-first com transparencia deterministica e orientacoes praticas.',
       uploadTitle: 'Contexto do Curriculo',
       uploadBody: 'Clique para enviar ou arraste PDF (ate 8MB)',
+      uploadNoFile: 'Nenhum arquivo selecionado ainda.',
+      uploadSelectedPrefix: 'PDF selecionado:',
       resumeLabel: 'Texto do Curriculo',
       resumePlaceholder: 'Cole o texto do curriculo aqui...',
       jobLabel: 'Descricao da Vaga',
@@ -143,14 +147,32 @@
       <label class="block bg-surface-container-low rounded-2xl p-6 cursor-pointer">
         <span class="block text-sm font-semibold mb-4">${escapeHtml(t('uploadTitle'))}</span>
         <input type="file" name="resume_pdf" accept=".pdf" class="hidden" />
-        <div class="min-h-[240px] rounded-xl2 border-2 border-dashed border-outline-variant/40 bg-surface-container-lowest flex flex-col items-center justify-center text-center px-8 py-8 hover:bg-primary-fixed/30 transition-colors">
+        <div id="resume-upload-zone" class="min-h-[240px] rounded-xl2 border-2 border-dashed border-outline-variant/40 bg-surface-container-lowest flex flex-col items-center justify-center text-center px-8 py-8 hover:bg-primary-fixed/30 transition-colors">
           <div class="w-16 h-16 rounded-full bg-primary-fixed text-primary flex items-center justify-center mb-4">
             <span class="material-symbols-outlined text-3xl">upload_file</span>
           </div>
           <p class="text-sm text-on-surface-variant leading-relaxed max-w-sm">${escapeHtml(t('uploadBody'))}</p>
+          <p id="resume-upload-status" class="mt-4 text-xs font-semibold text-on-surface-variant">${escapeHtml(t('uploadNoFile'))}</p>
         </div>
       </label>
     `;
+  }
+
+  function updateUploadStatus(file) {
+    const zone = document.getElementById('resume-upload-zone');
+    const status = document.getElementById('resume-upload-status');
+    if (!zone || !status) return;
+
+    if (!file) {
+      zone.classList.remove('border-primary', 'bg-primary-fixed/30');
+      zone.classList.add('border-outline-variant/40');
+      status.textContent = t('uploadNoFile');
+      return;
+    }
+
+    zone.classList.remove('border-outline-variant/40');
+    zone.classList.add('border-primary', 'bg-primary-fixed/30');
+    status.textContent = `${t('uploadSelectedPrefix')} ${file.name}`;
   }
 
   function SkillBar(skill, score, statusLabel) {
@@ -541,6 +563,15 @@
         event.preventDefault();
         submitAnalysis(form);
       });
+
+      const fileInput = form.querySelector('[name="resume_pdf"]');
+      if (fileInput) {
+        fileInput.addEventListener('change', () => {
+          const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+          updateUploadStatus(file);
+        });
+        updateUploadStatus(fileInput.files && fileInput.files[0] ? fileInput.files[0] : null);
+      }
     }
 
     document.querySelectorAll('[data-open]').forEach((node) => {
