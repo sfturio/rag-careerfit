@@ -1,16 +1,22 @@
 services:
   - type: web
-    name: careerfit-rag-engine
-    runtime: python
+    name: ragflow-engine
+    runtime: node
     plan: free
     autoDeploy: true
-    buildCommand: pip install -e .
-    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: npm install
+    startCommand: npm start
     healthCheckPath: /health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.6
       - key: LLM_PROVIDER
-        value: disabled
+        value: groq
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: OLLAMA_BASE_URL
+        value: http://localhost:11434
+      - key: OLLAMA_MODEL
+        value: llama3.1:8b
+      - key: LLM_TIMEOUT_MS
+        value: 30000
       - key: DATABASE_URL
         sync: false
