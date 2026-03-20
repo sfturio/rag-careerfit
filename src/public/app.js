@@ -6,7 +6,10 @@
     loading: false,
     error: '',
     result: null,
-    history: []
+    history: [],
+    helpOpen: false,
+    feedbackOpen: false,
+    feedbackText: ''
   };
 
   const UI_TEXT = {
@@ -60,6 +63,89 @@
   };
 
   const t = (key) => UI_TEXT[key] || key;
+
+  function SidebarSupportSection() {
+    return `
+      <div class="space-y-1.5">
+        <button id="open-help" class="w-full text-left px-2 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors text-sm font-medium flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">help</span><span>Help</span>
+        </button>
+        <button id="open-feedback" class="w-full text-left px-2 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors text-sm font-medium flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">chat</span><span>Feedback</span>
+        </button>
+      </div>
+    `;
+  }
+
+  function HelpModal() {
+    return `
+      <div class="fixed inset-0 z-[70] bg-black/30 backdrop-blur-sm flex items-center justify-center p-4" data-close-modal="help">
+        <div class="w-full max-w-3xl max-h-[86vh] overflow-y-auto bg-surface-container-lowest rounded-2xl shadow-2xl p-8 md:p-10">
+          <div class="flex items-start justify-between gap-4 mb-8">
+            <h2 class="text-3xl font-bold tracking-tight">How to use this app</h2>
+            <button id="close-help" class="px-3 py-1.5 rounded-lg text-sm font-semibold bg-surface-container-low hover:bg-surface-container-high">Close</button>
+          </div>
+
+          <ol class="space-y-3 text-[15px] leading-relaxed list-decimal pl-5 mb-10">
+            <li>Upload your resume in PDF or paste the text.</li>
+            <li>Add the job description you want to target.</li>
+            <li>Optionally define your target role.</li>
+            <li>Run the analysis.</li>
+            <li>Review scores, insights, and improvement suggestions.</li>
+            <li>Download or revisit your analysis later in History.</li>
+          </ol>
+
+          <section class="mb-10">
+            <h3 class="text-xl font-bold mb-4">Frequently Asked Questions</h3>
+            <div class="space-y-4 text-[15px] leading-relaxed">
+              <div><p class="font-semibold">Is this analysis 100% accurate?</p><p class="text-on-surface-variant">No. This tool combines deterministic analysis and AI assistance to provide helpful guidance, not guarantees.</p></div>
+              <div><p class="font-semibold">Do you store my resume?</p><p class="text-on-surface-variant">Analyses may be stored locally to improve your experience and allow history tracking.</p></div>
+              <div><p class="font-semibold">Can I use this for real job applications?</p><p class="text-on-surface-variant">Yes. The tool helps optimize structure and positioning, but final adjustments are always recommended.</p></div>
+              <div><p class="font-semibold">Why are scores different from other tools?</p><p class="text-on-surface-variant">Each platform uses different heuristics and models. This app focuses on clarity, transparency, and actionable insights.</p></div>
+              <div><p class="font-semibold">What is the difference between ATSFlow and RAGFlow?</p><p class="text-on-surface-variant">ATSFlow focuses on technical ATS optimization. RAGFlow focuses on semantic match and career strategy.</p></div>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="text-xl font-bold mb-4">Tips for better results</h3>
+            <ul class="space-y-2 text-[15px] leading-relaxed list-disc pl-5 text-on-surface-variant">
+              <li>Use complete job descriptions.</li>
+              <li>Avoid extremely short resumes.</li>
+              <li>Focus on measurable achievements.</li>
+              <li>Keep formatting simple and ATS-friendly.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    `;
+  }
+
+  function FeedbackModal() {
+    return `
+      <div class="fixed inset-0 z-[70] bg-black/30 backdrop-blur-sm flex items-center justify-center p-4" data-close-modal="feedback">
+        <div class="w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl p-8">
+          <div class="flex items-start justify-between gap-4 mb-6">
+            <h2 class="text-2xl font-bold tracking-tight">Feedback</h2>
+            <button id="close-feedback" class="px-3 py-1.5 rounded-lg text-sm font-semibold bg-surface-container-low hover:bg-surface-container-high">Close</button>
+          </div>
+          <label for="feedback-input" class="block text-sm font-semibold mb-3">Share your suggestion or report an issue</label>
+          <textarea id="feedback-input" class="w-full h-44 p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 focus:border-primary/40 focus:ring-2 focus:ring-primary/15 resize-none" placeholder="Type your feedback here...">${state.feedbackText || ''}</textarea>
+          <div class="mt-5 flex justify-end">
+            <button id="send-feedback" class="px-5 py-2.5 rounded-xl text-white font-semibold bg-primary hover:bg-primary-container transition-colors">Send Feedback</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSupportUi() {
+    const sidebarSupport = document.getElementById('sidebar-support');
+    if (sidebarSupport) sidebarSupport.innerHTML = SidebarSupportSection();
+
+    const modalRoot = document.getElementById('modal-root');
+    if (!modalRoot) return;
+    modalRoot.innerHTML = `${state.helpOpen ? HelpModal() : ''}${state.feedbackOpen ? FeedbackModal() : ''}`;
+  }
 
   function clamp(val) {
     return Math.max(0, Math.min(100, Math.round(Number(val) || 0)));
@@ -523,6 +609,66 @@
     const goMatch = document.getElementById('go-match');
     if (goMatch) goMatch.addEventListener('click', () => setPage('match'));
 
+    const openHelp = document.getElementById('open-help');
+    if (openHelp) {
+      openHelp.addEventListener('click', () => {
+        state.helpOpen = true;
+        render();
+      });
+    }
+
+    const openFeedback = document.getElementById('open-feedback');
+    if (openFeedback) {
+      openFeedback.addEventListener('click', () => {
+        state.feedbackOpen = true;
+        render();
+      });
+    }
+
+    const closeHelp = document.getElementById('close-help');
+    if (closeHelp) {
+      closeHelp.addEventListener('click', () => {
+        state.helpOpen = false;
+        render();
+      });
+    }
+
+    const closeFeedback = document.getElementById('close-feedback');
+    if (closeFeedback) {
+      closeFeedback.addEventListener('click', () => {
+        state.feedbackOpen = false;
+        render();
+      });
+    }
+
+    document.querySelectorAll('[data-close-modal]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (event.target !== node) return;
+        if (node.getAttribute('data-close-modal') === 'help') state.helpOpen = false;
+        if (node.getAttribute('data-close-modal') === 'feedback') state.feedbackOpen = false;
+        render();
+      });
+    });
+
+    const feedbackInput = document.getElementById('feedback-input');
+    if (feedbackInput) {
+      feedbackInput.addEventListener('input', (event) => {
+        state.feedbackText = event.target.value;
+      });
+    }
+
+    const sendFeedback = document.getElementById('send-feedback');
+    if (sendFeedback) {
+      sendFeedback.addEventListener('click', () => {
+        const feedback = (state.feedbackText || '').trim();
+        if (!feedback) return;
+        console.log('[RAGFlow Feedback]', feedback);
+        state.feedbackText = '';
+        state.feedbackOpen = false;
+        render();
+      });
+    }
+
     const newAnalysis = document.getElementById('new-analysis');
     if (newAnalysis && !newAnalysis.dataset.bound) {
       newAnalysis.dataset.bound = '1';
@@ -535,6 +681,7 @@
     if (state.page === 'result') app.innerHTML = ResultPage();
     if (state.page === 'history') app.innerHTML = HistoryPage();
     syncChromeText();
+    renderSupportUi();
     bindEvents();
   }
 
