@@ -40,7 +40,7 @@
     run: 'Rodar Análise de Carreira',
     running: 'Analisando...',
     previewTitle: 'Prévia da Análise',
-    previewText: 'Match de skills, gaps, evidencias e plano de estudo em um fluxo unico.',
+    previewText: 'Match de skills, evidencias acionaveis, roadmap personalizado e proximos passos em um fluxo unico.',
     noResult: 'Sem resultado ainda',
     noResultSub: 'Rode uma análise na tela de Match primeiro.',
     backToMatch: 'Ir para Análise de Match',
@@ -49,11 +49,12 @@
     weightedScore: 'Match Ponderado',
     insight: 'Insight de IA',
     download: 'Baixar Relatório',
-    skillsViz: 'Visualização de Match de Skills',
+    skillsViz: 'Insights de Competencias',
+    skillsHelper: 'Veja como suas competencias se conectam com a vaga analisada.',
     gaps: 'Skills em Gap',
     noGaps: 'Nenhum gap relevante encontrado.',
-    timeline: 'Plano de Estudo',
-    strategic: 'Melhorias Estratégicas',
+    timeline: 'Roadmap de Carreira Personalizado',
+    strategic: 'Proximos passos para aumentar seu Match',
     historyTitle: 'Histórico',
     historySub: 'Linha do tempo das análises anteriores.',
     open: 'Abrir',
@@ -238,19 +239,40 @@
     status.textContent = `${t('uploadSelectedPrefix')} ${file.name}`;
   }
 
-  function SkillBar(skill, score, statusLabel) {
-    const val = clamp(score);
-    return `
-      <div class="space-y-2">
-        <div class="flex justify-between gap-3 text-sm font-semibold">
-          <span class="truncate">${escapeHtml(skill)}</span>
-          <span class="${scoreColor(val)}">${escapeHtml(statusLabel || (val + '%'))}</span>
-        </div>
-        <div class="h-2.5 bg-surface-container-highest/60 rounded-full overflow-hidden">
-          <div class="h-full ${barColor(val)} rounded-full" style="width:${val}%"></div>
-        </div>
-      </div>
-    `;
+  function getSkillLevelLabel(level) {
+    if (level === 'high') return 'Forte no seu curriculo';
+    if (level === 'medium') return 'Pode fortalecer';
+    return 'Precisa desenvolver';
+  }
+
+  function getSkillTooltip(level) {
+    if (level === 'high') return 'Essa skill aparece claramente nas suas experiencias ou projetos.';
+    if (level === 'medium') return 'A skill foi encontrada, mas pode ser melhor evidenciada com resultados concretos.';
+    return 'A skill e relevante para a vaga, mas nao foi encontrada com evidencia suficiente no curriculo.';
+  }
+
+  function levelPill(level) {
+    if (level === 'high') {
+      return `<span title="${escapeHtml(getSkillTooltip(level))}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-[#e6f4ea] text-[#1b5e20] border border-[#b7dfbf]">Forte no seu curriculo</span>`;
+    }
+    if (level === 'medium') {
+      return `<span title="${escapeHtml(getSkillTooltip(level))}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-[#fff4e5] text-[#8a4b00] border border-[#ffd7a8]">Pode fortalecer</span>`;
+    }
+    return `<span title="${escapeHtml(getSkillTooltip(level))}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-[#fdeaea] text-[#93000a] border border-[#f7c9c9]">Precisa desenvolver</span>`;
+  }
+
+  function toSkillInsightItem(item) {
+    const score = clamp(item.score != null ? item.score : item.presentInResume ? 100 * (item.weight || 1) : 20);
+    const level = item.level || (item.presentInResume ? (score >= 70 ? 'high' : 'medium') : 'low');
+    return {
+      ...item,
+      score,
+      level,
+      explanation: item.explanation || 'Pontuacao estimada por relevancia da skill na vaga e evidencias no curriculo.',
+      evidenceSnippet: item.evidenceSnippet || item.evidence || null,
+      improveSuggestion:
+        item.improveSuggestion || 'Adicione um bullet tecnico com contexto, stack e resultado mensuravel.'
+    };
   }
 
   function ScoreCard(label, score) {
@@ -280,46 +302,154 @@
     `;
   }
 
-  function SuggestionList(items) {
-    const list = (items || []).slice(0, 8);
+  function SkillInsightPanel(items) {
+    const rows = (items || []).map((raw) => toSkillInsightItem(raw));
+    return `
+      <div class="bg-surface-container-low rounded-2xl p-6">
+        <div class="flex items-start justify-between gap-4 mb-3">
+          <h3 class="text-xl font-bold">${escapeHtml(t('skillsViz'))}</h3>
+          <span class="text-xl" title="Skills">🧠</span>
+        </div>
+        <p class="text-sm text-on-surface-variant mb-5">${escapeHtml(t('skillsHelper'))}</p>
+        <div class="space-y-3">
+          ${
+            rows.length
+              ? rows
+                  .map(
+                    (item) =>
+                      `<details class="group rounded-xl border border-outline-variant/20 bg-surface-container-lowest overflow-hidden">
+                        <summary class="list-none cursor-pointer px-4 py-4 flex flex-wrap gap-3 items-center justify-between">
+                          <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold truncate">${escapeHtml(item.skill)}</p>
+                            <div class="mt-2 h-2.5 bg-surface-container-highest/60 rounded-full overflow-hidden">
+                              <div class="h-full ${barColor(item.score)} rounded-full" style="width:${item.score}%"></div>
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-xs font-bold ${scoreColor(item.score)}">${item.score}%</span>
+                            ${levelPill(item.level)}
+                            <span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+                          </div>
+                        </summary>
+                        <div class="px-4 pb-4 pt-2 space-y-3 border-t border-outline-variant/15 bg-surface-container-low/40">
+                          <p class="text-sm leading-relaxed"><span class="font-semibold">Por que esta pontuacao:</span> ${escapeHtml(item.explanation)}</p>
+                          <p class="text-sm leading-relaxed"><span class="font-semibold">Onde foi detectada:</span> ${escapeHtml(item.evidenceSnippet || 'Sem trecho relevante detectado no curriculo.')}</p>
+                          <p class="text-sm leading-relaxed"><span class="font-semibold">Como melhorar:</span> ${escapeHtml(item.improveSuggestion)}</p>
+                        </div>
+                      </details>`
+                  )
+                  .join('')
+              : `<p class="text-sm text-on-surface-variant">-</p>`
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  function toNextAction(item) {
+    if (typeof item === 'string') {
+      return {
+        icon: '🚀',
+        category: 'Career',
+        title: item,
+        whyMatch: 'Esta acao reforca sinais de aderencia para a vaga.',
+        execution: 'Execute com bullets tecnicos e resultados mensuraveis.',
+        recruiterGain: 'Melhora a percepcao de senioridade e consistencia.'
+      };
+    }
+    return {
+      icon: item.icon || '🚀',
+      category: item.category || 'Career',
+      title: item.title || 'Acao recomendada',
+      whyMatch: item.whyMatch || 'Aumenta conexao entre curriculo e vaga.',
+      execution: item.execution || 'Transforme em entrega concreta no curriculo/portfolio.',
+      recruiterGain: item.recruiterGain || 'Eleva confianca do recrutador no seu fit.'
+    };
+  }
+
+  function iconByCategory(category) {
+    const normalized = String(category || '').toLowerCase();
+    if (normalized.includes('match')) return '🎯';
+    if (normalized.includes('study')) return '📚';
+    if (normalized.includes('skill')) return '🧠';
+    return '🚀';
+  }
+
+  function NextActionsPanel(items) {
+    const list = (items || []).map((item) => toNextAction(item)).slice(0, 8);
     return `
       <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm">
-        <h3 class="text-xl font-bold mb-5">${escapeHtml(t('strategic'))}</h3>
-        <ul class="space-y-3">
+        <div class="flex items-center gap-2 mb-5">
+          <span class="text-xl">🚀</span>
+          <h3 class="text-xl font-bold">${escapeHtml(t('strategic'))}</h3>
+        </div>
+        <div class="space-y-3">
           ${
             list.length
               ? list
                   .map(
                     (item) =>
-                      `<li class="flex items-start gap-3"><span class="material-symbols-outlined text-primary mt-0.5">check_circle</span><span class="text-sm leading-relaxed">${escapeHtml(item)}</span></li>`
+                      `<details class="group rounded-xl border border-outline-variant/20 bg-surface-container-low overflow-hidden">
+                        <summary class="list-none cursor-pointer px-4 py-4 flex items-start justify-between gap-3">
+                          <div class="min-w-0">
+                            <p class="text-sm font-semibold break-words">${escapeHtml(item.title)}</p>
+                            <p class="text-xs text-on-surface-variant mt-1">${escapeHtml(item.category)}</p>
+                          </div>
+                          <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-lg">${iconByCategory(item.category) || item.icon}</span>
+                            <span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+                          </div>
+                        </summary>
+                        <div class="px-4 pb-4 pt-2 space-y-3 border-t border-outline-variant/15 bg-surface-container-lowest">
+                          <p class="text-sm leading-relaxed"><span class="font-semibold">Por que aumenta o match:</span> ${escapeHtml(item.whyMatch)}</p>
+                          <p class="text-sm leading-relaxed"><span class="font-semibold">Como executar:</span> ${escapeHtml(item.execution)}</p>
+                          <p class="text-sm leading-relaxed"><span class="font-semibold">Ganho na percepcao do recrutador:</span> ${escapeHtml(item.recruiterGain)}</p>
+                        </div>
+                      </details>`
                   )
                   .join('')
-              : `<li class="text-sm text-on-surface-variant">${escapeHtml(t('emptyHistory'))}</li>`
+              : `<p class="text-sm text-on-surface-variant">${escapeHtml(t('emptyHistory'))}</p>`
           }
-        </ul>
+        </div>
       </div>
     `;
   }
 
-  function Timeline(items) {
-    const rows = (items || []).map((row) => {
-      const week = row.week || '?';
-      const focus = row.focus || '';
-      const action = Array.isArray(row.actions) ? row.actions[0] : '';
+  function toRoadmapWeek(row) {
+    return {
+      week: row.week || '?',
+      title: row.title || row.focus || '',
+      focusObjective: row.focusObjective || row.focus || '',
+      practicalTask: row.practicalTask || (Array.isArray(row.actions) ? row.actions[0] : ''),
+      deliverable: row.deliverable || '',
+      careerImpact: row.careerImpact || ''
+    };
+  }
+
+  function CareerRoadmap(items) {
+    const rows = (items || []).map((raw) => {
+      const row = toRoadmapWeek(raw);
       return `
-        <div class="relative pl-10 pb-6">
-          <div class="absolute left-0 top-0 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">${week}</div>
-          <div class="absolute left-[13px] top-7 bottom-0 w-px bg-surface-container-high"></div>
-          <h4 class="text-sm font-bold">Semana ${week}: ${escapeHtml(focus)}</h4>
-          <p class="text-xs text-on-surface-variant mt-1 leading-relaxed">${escapeHtml(action)}</p>
-        </div>
+        <article class="rounded-xl border border-outline-variant/20 bg-surface-container-low p-4 space-y-3">
+          <div class="flex items-center justify-between gap-3">
+            <h4 class="text-sm font-bold">Semana ${escapeHtml(row.week)} - ${escapeHtml(row.title)}</h4>
+            <span class="text-base">📚</span>
+          </div>
+          <p class="text-sm leading-relaxed"><span class="font-semibold">Objetivo:</span> ${escapeHtml(row.focusObjective)}</p>
+          <p class="text-sm leading-relaxed"><span class="font-semibold">Tarefa pratica:</span> ${escapeHtml(row.practicalTask)}</p>
+          <p class="text-sm leading-relaxed"><span class="font-semibold">Entregavel:</span> ${escapeHtml(row.deliverable || '-')}</p>
+          <p class="text-sm leading-relaxed"><span class="font-semibold">Impacto de carreira:</span> ${escapeHtml(row.careerImpact || '-')}</p>
+        </article>
       `;
     });
 
     return `
       <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm">
-        <h3 class="text-xl font-bold mb-5">${escapeHtml(t('timeline'))}</h3>
-        <div>${rows.join('') || `<p class="text-sm text-on-surface-variant">-</p>`}</div>
+        <div class="flex items-center gap-2 mb-5">
+          <span class="text-xl">📚</span>
+          <h3 class="text-xl font-bold">${escapeHtml(t('timeline'))}</h3>
+        </div>
+        <div class="space-y-3">${rows.join('') || `<p class="text-sm text-on-surface-variant">-</p>`}</div>
       </div>
     `;
   }
@@ -501,20 +631,6 @@
     const circumference = 2 * Math.PI * 86;
     const offset = circumference - (score / 100) * circumference;
 
-    const skillBars = (r.skillBreakdown || [])
-      .slice(0, 8)
-      .map((item) =>
-        SkillBar(item.skill, item.presentInResume ? 100 * (item.weight || 1) : 25, item.presentInResume ? 'aderente' : 'lacuna')
-      )
-      .join('');
-
-    const gaps = (r.missingSkills || [])
-      .map(
-        (skill) =>
-          `<div class="px-4 py-3 rounded-xl bg-surface-container-low border-l-4 border-tertiary-container"><p class="font-semibold text-sm">${escapeHtml(skill)}</p></div>`
-      )
-      .join('');
-
     return `
       <section class="space-y-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -548,21 +664,11 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <div class="lg:col-span-3 bg-surface-container-low rounded-2xl p-6">
-            <h3 class="text-xl font-bold mb-5">${escapeHtml(t('skillsViz'))}</h3>
-            <div class="space-y-4">${skillBars || `<p class="text-sm text-on-surface-variant">-</p>`}</div>
-          </div>
-
-          <div class="lg:col-span-2 bg-surface-container-lowest rounded-2xl p-6 shadow-sm">
-            <h3 class="text-xl font-bold mb-5">${escapeHtml(t('gaps'))}</h3>
-            <div class="space-y-3">${gaps || `<p class="text-sm text-on-surface-variant">${escapeHtml(t('noGaps'))}</p>`}</div>
-          </div>
-        </div>
+        ${SkillInsightPanel((r.skillBreakdown || []).slice(0, 12))}
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div class="lg:col-span-4">${Timeline(r.studyPlan || [])}</div>
-          <div class="lg:col-span-8">${SuggestionList(r.resumeOptimizationSuggestions || [])}</div>
+          <div class="lg:col-span-5">${CareerRoadmap(r.careerRoadmap || r.studyPlan || [])}</div>
+          <div class="lg:col-span-7">${NextActionsPanel(r.nextActions || r.resumeOptimizationSuggestions || [])}</div>
         </div>
       </section>
     `;

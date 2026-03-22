@@ -100,6 +100,7 @@ const I18N = {
     missingSkillsSection: "## Missing skills",
     evidenceSection: "## Evidence (RAG-like retrieval)",
     studyPlanSection: "## Study plan",
+    nextActionsSection: "## Next steps to improve your Match",
     weekLabel: "Week",
     none: "None",
     fallbackFocus: "Portfolio and interview readiness",
@@ -125,7 +126,10 @@ const I18N = {
     w3a3: "Track quality indicators (errors, latency, test pass rate).",
     w4a1: "Update resume with concrete outcomes linked to",
     w4a2: "Prepare five interview stories using STAR format.",
-    w4a3: "Apply to target roles and track recruiter feedback."
+    w4a3: "Apply to target roles and track recruiter feedback.",
+    highMatch: "Strong on your resume",
+    mediumMatch: "Can be strengthened",
+    lowMatch: "Needs development"
   },
   pt: {
     mentionFound: "Mencao encontrada para",
@@ -133,17 +137,18 @@ const I18N = {
     reportTitle: "Relatorio de Aderencia",
     matchScore: "Match score",
     weightedMatchScore: "Match score ponderado",
-    matchedSkills: "Skills com aderencia",
-    missingSkills: "Skills ausentes",
-    matchedSkillsSection: "## Skills com aderencia",
-    missingSkillsSection: "## Gaps de skills",
+    matchedSkills: "Skills fortes no curriculo",
+    missingSkills: "Skills para desenvolver",
+    matchedSkillsSection: "## Skills fortes no curriculo",
+    missingSkillsSection: "## Skills para desenvolver",
     evidenceSection: "## Evidencias (RAG)",
-    studyPlanSection: "## Plano de estudo",
+    studyPlanSection: "## Roadmap de carreira personalizado",
+    nextActionsSection: "## Proximos passos para aumentar seu Match",
     weekLabel: "Semana",
     none: "Nenhum",
-    fallbackFocus: "Refino de portfolio e entrevistas",
-    fallbackA1: "Prepare dois estudos de caso curtos com resultados mensuraveis.",
-    fallbackA2: "Treine respostas STAR para entrevistas tecnicas.",
+    fallbackFocus: "Consolidacao de posicionamento tecnico",
+    fallbackA1: "Organize dois cases com problema, solucao, stack e resultado mensuravel.",
+    fallbackA2: "Treine narrativa STAR para entrevistas tecnicas e comportamentais.",
     summary1: "Reescreva seu resumo para alinhar com resultados de",
     summary2: ".",
     sProjects: "Adicione projetos com impacto mensuravel e contexto de negocio.",
@@ -164,7 +169,10 @@ const I18N = {
     w3a3: "Acompanhe indicadores (erros, latencia, taxa de sucesso).",
     w4a1: "Atualize o curriculo com resultados concretos ligados a",
     w4a2: "Prepare cinco historias de entrevista usando STAR.",
-    w4a3: "Aplique para vagas-alvo e acompanhe feedbacks."
+    w4a3: "Aplique para vagas-alvo e acompanhe feedbacks.",
+    highMatch: "Forte no seu curriculo",
+    mediumMatch: "Pode fortalecer",
+    lowMatch: "Precisa desenvolver"
   }
 };
 
@@ -331,14 +339,64 @@ function searchEvidence(resumeText, skill) {
   };
 }
 
+function getSkillLevel(score) {
+  if (score >= 75) return "high";
+  if (score >= 45) return "medium";
+  return "low";
+}
+
+function getSkillLevelLabel(language, level) {
+  if (level === "high") return t(language, "highMatch");
+  if (level === "medium") return t(language, "mediumMatch");
+  return t(language, "lowMatch");
+}
+
+function skillImproveSuggestion(language, skill, level) {
+  if (level === "high") {
+    return language === "pt"
+      ? `Aumente senioridade mostrando impacto de ${skill} com escala, latencia, custo ou qualidade.`
+      : `Increase seniority by showing ${skill} impact with scale, latency, cost, or quality outcomes.`;
+  }
+  if (level === "medium") {
+    return language === "pt"
+      ? `Fortaleca ${skill} com um bullet mais tecnico: tecnologia + decisao + resultado quantificado.`
+      : `Strengthen ${skill} with a technical bullet: technology + decision + quantified result.`;
+  }
+  return language === "pt"
+    ? `Inclua uma experiencia pratica com ${skill} em projeto real e destaque no curriculo com resultado mensuravel.`
+    : `Add practical ${skill} experience in a real project and highlight measurable outcomes on your resume.`;
+}
+
 function buildSkillBreakdown(requiredSkills, resumeText, language) {
   const normalizedResume = normalizeText(resumeText);
   return requiredSkills.map((item) => {
     const present = hasSkill(normalizedResume, item.skill);
     const evidence = present ? searchEvidence(resumeText, item.skill) : null;
+    const relevanceBoost = clampScore((item.weight || 0) * 100) / 100;
+    const evidenceBoost = evidence ? Math.round((evidence.evidenceScore || 0) * 20) : 0;
+    const score = clampScore((present ? 55 : 15) + Math.round(relevanceBoost * 35) + evidenceBoost);
+    const level = getSkillLevel(score);
+    const levelLabel = getSkillLevelLabel(language, level);
+    const explanation = present
+      ? language === "pt"
+        ? `A skill ${item.skill} foi detectada no curriculo e conectada ao contexto da vaga (peso ${Math.round(
+            (item.weight || 0) * 100
+          )}%).`
+        : `The skill ${item.skill} was detected in the resume and linked to job context (weight ${Math.round(
+            (item.weight || 0) * 100
+          )}%).`
+      : language === "pt"
+      ? `A skill ${item.skill} aparece como relevante na vaga, mas nao foi evidenciada no curriculo.`
+      : `The skill ${item.skill} is relevant for the role but was not evidenced in the resume.`;
 
     return {
       skill: item.skill,
+      score,
+      level,
+      levelLabel,
+      explanation,
+      evidenceSnippet: evidence ? evidence.evidence : null,
+      improveSuggestion: skillImproveSuggestion(language, item.skill, level),
       presentInResume: present,
       weight: item.weight,
       sourceSection: item.sourceSection,
@@ -349,84 +407,172 @@ function buildSkillBreakdown(requiredSkills, resumeText, language) {
   });
 }
 
-function buildStudyPlan(prioritizedMissing, language) {
-  if (!prioritizedMissing.length) {
-    return [
-      {
-        week: 1,
-        focus: t(language, "fallbackFocus"),
-        actions: [t(language, "fallbackA1"), t(language, "fallbackA2")],
-        resources: ["STAR Method Guide", "Pramp"]
-      }
-    ];
+function buildWeekDeliverable(language, skills, week) {
+  const combo = skills.join(language === "pt" ? " + " : " + ");
+  if (week === 1) {
+    return language === "pt"
+      ? "Repositorio GitHub com README tecnico e checklist de aprendizado."
+      : "GitHub repository with technical README and learning checklist.";
   }
-
-  const top = prioritizedMissing.map((item) => item.skill).slice(0, 3);
-  const [s1, s2 = top[0], s3 = s2] = top;
-
-  const resourcesFor = (skills) => {
-    const resources = [];
-    for (const skill of skills) {
-      resources.push(...(RESOURCES_BY_SKILL[skill] || [`Official docs for ${skill}`]));
-    }
-    return [...new Set(resources)].slice(0, 4);
-  };
-
-  return [
-    {
-      week: 1,
-      focus: `${t(language, "w1")}: ${s1}`,
-      actions: [
-        `${t(language, "w1a1")} ${s1}.`,
-        `${t(language, "w1a2")} ${s1}.`,
-        t(language, "w1a3")
-      ],
-      resources: resourcesFor([s1])
-    },
-    {
-      week: 2,
-      focus: `${t(language, "w2")} ${s1} ${language === "pt" ? "e" : "and"} ${s2}`,
-      actions: [
-        `${t(language, "w2a1")} ${s1} ${language === "pt" ? "e" : "and"} ${s2}.`,
-        t(language, "w2a2"),
-        t(language, "w2a3")
-      ],
-      resources: resourcesFor([s1, s2])
-    },
-    {
-      week: 3,
-      focus: `${t(language, "w3")} ${s2}/${s3}`,
-      actions: [
-        t(language, "w3a1"),
-        `${t(language, "w3a2")} ${s3}.`,
-        t(language, "w3a3")
-      ],
-      resources: resourcesFor([s2, s3])
-    },
-    {
-      week: 4,
-      focus: t(language, "w4"),
-      actions: [
-        `${t(language, "w4a1")} ${s1} ${language === "pt" ? "e" : "and"} ${s2}.`,
-        t(language, "w4a2"),
-        t(language, "w4a3")
-      ],
-      resources: ["LinkedIn Jobs", "STAR Method Guide", "GitHub"]
-    }
-  ];
+  if (week <= 3) {
+    return language === "pt"
+      ? `Feature funcional envolvendo ${combo} com endpoint ou demo publicada.`
+      : `Working feature using ${combo} with a published endpoint or demo.`;
+  }
+  return language === "pt"
+    ? `Atualizacao do curriculo + portfolio com resultados mensuraveis das entregas em ${combo}.`
+    : `Updated resume + portfolio with measurable outcomes from ${combo} deliverables.`;
 }
 
-function buildDeterministicSuggestions(targetRole, missingSkills, language) {
-  const role = targetRole || (language === "pt" ? "o cargo alvo" : "the target role");
-  const base = [
-    `${t(language, "summary1")} ${role}${t(language, "summary2")}`,
-    t(language, "sProjects"),
-    t(language, "sStack")
-  ];
-  if (missingSkills.length) {
-    base.push(`${t(language, "sMissing")}: ${missingSkills.slice(0, 5).join(", ")}.`);
+function buildCareerRoadmap(prioritizedMissing, matchedSkills, language) {
+  const gaps = prioritizedMissing.map((item) => item.skill);
+  const baseSkills = gaps.length ? gaps : matchedSkills.slice(0, 3);
+  const uniqueSkills = [...new Set(baseSkills)].slice(0, 6);
+  const weeksCount = Math.min(6, Math.max(3, 3 + Math.ceil(uniqueSkills.length / 2)));
+  const fallbackSkill = uniqueSkills[0] || "backend";
+
+  const roadmap = [];
+  for (let week = 1; week <= weeksCount; week += 1) {
+    const primary = uniqueSkills[(week - 1) % Math.max(uniqueSkills.length, 1)] || fallbackSkill;
+    const secondary =
+      uniqueSkills[week % Math.max(uniqueSkills.length, 1)] || uniqueSkills[0] || fallbackSkill;
+    const skillsThisWeek = week === 1 ? [primary] : [primary, secondary];
+    const resources = [...new Set(skillsThisWeek.flatMap((skill) => RESOURCES_BY_SKILL[skill] || [`Official docs for ${skill}`]))].slice(0, 4);
+
+    roadmap.push({
+      week,
+      title:
+        language === "pt"
+          ? `Fortalecer ${skillsThisWeek.join(" + ")}`
+          : `Strengthen ${skillsThisWeek.join(" + ")}`,
+      focusObjective:
+        language === "pt"
+          ? `Construir dominio pratico de ${skillsThisWeek.join(
+              " e "
+            )} no contexto de uma vaga real.`
+          : `Build practical command of ${skillsThisWeek.join(" and ")} in a real-job context.`,
+      practicalTask:
+        language === "pt"
+          ? `Implementar uma entrega real usando ${skillsThisWeek.join(
+              " e "
+            )}: API, automacao ou integracao orientada a negocio.`
+          : `Implement a real deliverable with ${skillsThisWeek.join(
+              " and "
+            )}: API, automation, or business-oriented integration.`,
+      deliverable: buildWeekDeliverable(language, skillsThisWeek, week),
+      careerImpact:
+        language === "pt"
+          ? `Mostra aos recrutadores evidencia concreta de ${skillsThisWeek.join(
+              " e "
+            )}, elevando a percepcao de prontidao para a vaga.`
+          : `Shows recruiters concrete evidence of ${skillsThisWeek.join(
+              " and "
+            )}, improving readiness perception for the role.`,
+      relatedSkills: skillsThisWeek,
+      resources
+    });
   }
-  return base;
+
+  return roadmap;
+}
+
+function buildCareerNextActions({
+  language,
+  targetRole,
+  weightedMatchScore,
+  prioritizedMissing,
+  skillBreakdown
+}) {
+  const role = targetRole || (language === "pt" ? "vaga alvo" : "target role");
+  const actions = [];
+  const topGaps = prioritizedMissing.slice(0, 4).map((item) => item.skill);
+  const weakSignals = skillBreakdown.filter((item) => item.level !== "high").slice(0, 3);
+
+  if (topGaps.length) {
+    actions.push({
+      category: "Skills",
+      icon: "🧠",
+      title: `Evidenciar ${topGaps.slice(0, 2).join(" e ")} com provas praticas`,
+      whyMatch:
+        language === "pt"
+          ? `Essas competencias aparecem como gap prioritario e reduzem seu match atual (${weightedMatchScore}%).`
+          : `These skills are top gaps and reduce your current match (${weightedMatchScore}%).`,
+      execution:
+        language === "pt"
+          ? `Atualize projetos e experiencias com bullets tecnicos para ${topGaps.join(
+              ", "
+            )}, incluindo tecnologia usada e resultado.`
+          : `Update projects and experience bullets for ${topGaps.join(
+              ", "
+            )}, including stack and measurable outcomes.`,
+      recruiterGain:
+        language === "pt"
+          ? "Aumenta a leitura de aderencia tecnica imediata no primeiro scan do curriculo."
+          : "Improves immediate technical-fit perception during first resume scan."
+    });
+  }
+
+  actions.push({
+    category: "Match",
+    icon: "🎯",
+    title: "Alinhar resumo profissional com requisitos da vaga",
+    whyMatch:
+      language === "pt"
+        ? `Seu posicionamento atual nao comunica claramente por que voce e forte para ${role}.`
+        : `Your current positioning does not clearly communicate why you are strong for ${role}.`,
+    execution:
+      language === "pt"
+        ? `Reescreva o resumo em 3-4 linhas: stack principal, tipo de problema resolvido e impacto entregue.`
+        : `Rewrite summary in 3-4 lines: core stack, problem domain, and delivered impact.`,
+    recruiterGain:
+      language === "pt"
+        ? "Gera narrativa mais senior e facilita shortlist rapido."
+        : "Creates a more senior narrative and supports faster shortlisting."
+  });
+
+  if (weakSignals.length) {
+    actions.push({
+      category: "Career",
+      icon: "🚀",
+      title: "Transformar bullets vagos em resultados quantificados",
+      whyMatch:
+        language === "pt"
+          ? "Responsabilidades genericas nao sustentam score de match nem senioridade percebida."
+          : "Generic responsibilities do not support match score or perceived seniority.",
+      execution:
+        language === "pt"
+          ? `Escolha 3 experiencias e reescreva no formato Acao + Contexto + Resultado (%/tempo/custo), cobrindo ${weakSignals
+              .map((item) => item.skill)
+              .join(", ")}.`
+          : `Pick 3 experiences and rewrite as Action + Context + Result (%/time/cost), covering ${weakSignals
+              .map((item) => item.skill)
+              .join(", ")}.`,
+      recruiterGain:
+        language === "pt"
+          ? "Aumenta credibilidade tecnica e percepcao de ownership."
+          : "Increases technical credibility and ownership perception."
+    });
+  }
+
+  actions.push({
+    category: "Study",
+    icon: "📚",
+    title: "Publicar evidencia tecnica recorrente",
+    whyMatch:
+      language === "pt"
+        ? "Sem prova recente de evolucao, gaps continuam sendo interpretados como risco."
+        : "Without recent proof of progress, gaps keep being interpreted as risk.",
+    execution:
+      language === "pt"
+        ? "Publique semanalmente um micro-case no GitHub/LinkedIn com problema, implementacao e resultado."
+        : "Publish a weekly micro-case on GitHub/LinkedIn with problem, implementation, and outcome.",
+    recruiterGain:
+      language === "pt"
+        ? "Passa sinal de aprendizado continuo e prontidao de mercado."
+        : "Signals continuous learning and market readiness."
+  });
+
+  return actions.slice(0, 8);
 }
 
 function buildReport({
@@ -437,7 +583,8 @@ function buildReport({
   matchedSkills,
   missingSkills,
   skillBreakdown,
-  studyPlan
+  studyPlan,
+  nextActions
 }) {
   const lines = [
     `# ${t(language, "reportTitle")} - ${targetRole || "Backend Developer"}`,
@@ -467,8 +614,20 @@ function buildReport({
 
   lines.push("", t(language, "studyPlanSection"));
   for (const week of studyPlan) {
-    lines.push(`### ${t(language, "weekLabel")} ${week.week} - ${week.focus}`);
-    for (const action of week.actions) lines.push(`- ${action}`);
+    lines.push(`### ${t(language, "weekLabel")} ${week.week} - ${week.title || week.focus}`);
+    if (week.focusObjective) lines.push(`- Objetivo: ${week.focusObjective}`);
+    if (week.practicalTask) lines.push(`- Tarefa pratica: ${week.practicalTask}`);
+    if (week.deliverable) lines.push(`- Entregavel: ${week.deliverable}`);
+    if (week.careerImpact) lines.push(`- Impacto de carreira: ${week.careerImpact}`);
+    for (const action of week.actions || []) lines.push(`- ${action}`);
+  }
+
+  lines.push("", t(language, "nextActionsSection"));
+  for (const action of nextActions || []) {
+    lines.push(`- ${action.icon || "•"} ${action.title}`);
+    lines.push(`  - Por que aumenta match: ${action.whyMatch}`);
+    lines.push(`  - Como executar: ${action.execution}`);
+    lines.push(`  - Ganho de percepcao: ${action.recruiterGain}`);
   }
 
   return lines.join("\n");
@@ -504,8 +663,15 @@ function analyzeResumeVsJob({ resumeText, jobDescription, targetRole }) {
     .sort((a, b) => b.weight - a.weight)
     .map((item) => ({ skill: item.skill, weight: item.weight, section: item.sourceSection }));
 
-  const studyPlan = buildStudyPlan(prioritizedMissing, language);
-  const suggestions = buildDeterministicSuggestions(targetRole, missingSkills, language);
+  const studyPlan = buildCareerRoadmap(prioritizedMissing, matchedSkills, language);
+  const nextActions = buildCareerNextActions({
+    language,
+    targetRole,
+    weightedMatchScore,
+    prioritizedMissing,
+    skillBreakdown
+  });
+  const suggestions = nextActions.map((item) => item.title);
   const reportMarkdown = buildReport({
     language,
     targetRole,
@@ -514,7 +680,8 @@ function analyzeResumeVsJob({ resumeText, jobDescription, targetRole }) {
     matchedSkills,
     missingSkills,
     skillBreakdown,
-    studyPlan
+    studyPlan,
+    nextActions
   });
 
   return {
@@ -523,6 +690,8 @@ function analyzeResumeVsJob({ resumeText, jobDescription, targetRole }) {
     matchedSkills,
     missingSkills,
     skillBreakdown,
+    nextActions,
+    careerRoadmap: studyPlan,
     studyPlan,
     resumeOptimizationSuggestions: suggestions,
     reportMarkdown,

@@ -36,15 +36,9 @@ function applyLlmAssist(baseResult, llmText) {
   if (!lines.length) return baseResult;
 
   const summaryLine = lines.find((line) => !line.startsWith("-") && isMeaningfulSummary(line)) || "";
-  const extraSuggestions = lines
-    .filter((line) => line.startsWith("-"))
-    .map((line) => line.replace(/^-+\s*/, ""));
-
-  const suggestions = [...baseResult.resumeOptimizationSuggestions, ...extraSuggestions].slice(0, 8);
   return {
     ...baseResult,
-    synthesizedSummary: summaryLine || null,
-    resumeOptimizationSuggestions: suggestions
+    synthesizedSummary: summaryLine || null
   };
 }
 
