@@ -390,6 +390,25 @@
     return { tint: '#FFF8F1', accent: '#F59E0B', label: 'MEDIUM' };
   }
 
+  function priorityRank(priority) {
+    const normalized = String(priority || '').toLowerCase();
+    if (normalized === 'high') return 0;
+    if (normalized === 'medium') return 1;
+    if (normalized === 'low') return 2;
+    return 3;
+  }
+
+  function sortByPriority(items) {
+    return items
+      .map((item, idx) => ({ item, idx }))
+      .sort((a, b) => {
+        const rankDiff = priorityRank(a.item.priority) - priorityRank(b.item.priority);
+        if (rankDiff !== 0) return rankDiff;
+        return a.idx - b.idx;
+      })
+      .map((entry) => entry.item);
+  }
+
   function ensurePriorityMix(items) {
     const list = (items || []).map((item) => ({
       ...item,
@@ -414,7 +433,8 @@
     return list;
   }
   function NextActionsPanel(items) {
-    const list = ensurePriorityMix((items || []).map((item) => toNextAction(item)).slice(0, 8));
+    const mixed = ensurePriorityMix((items || []).map((item) => toNextAction(item)).slice(0, 8));
+    const list = sortByPriority(mixed);
     return `
       <div class="premium-card p-7 bg-[#FCFDFF]">
         <div class="flex items-center gap-2 mb-5">
