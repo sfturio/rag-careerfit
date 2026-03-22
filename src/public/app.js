@@ -366,24 +366,24 @@
               ? rows
                   .map(
                     (item) =>
-                      `<details open class="group premium-hover rounded-2xl border border-outline-variant/60 overflow-hidden" style="background:#FEFEFF; box-shadow: var(--card-shadow-soft);">
+                      `<details open class="group premium-hover rounded-2xl border border-outline-variant/60 overflow-hidden bg-surface-container-lowest dark:bg-slate-900/70" style="box-shadow: var(--card-shadow-soft);">
                         <summary class="list-none cursor-pointer px-4 py-4 flex flex-wrap gap-3 items-center justify-between">
                           <div class="min-w-0 flex-1">
-                            <p class="text-sm font-semibold truncate">${escapeHtml(item.skill)}</p>
-                            <div class="mt-2 h-3 bg-[#E9EEF7] rounded-full overflow-hidden">
+                            <p class="text-sm font-semibold truncate text-on-surface dark:text-slate-100">${escapeHtml(item.skill)}</p>
+                            <div class="mt-2 h-3 bg-[#E9EEF7] dark:bg-slate-700/70 rounded-full overflow-hidden">
                               <div class="h-full ${barColor(item.score)} rounded-full" style="width:${item.score}%; transition: width 320ms ease"></div>
                             </div>
                           </div>
                           <div class="flex items-center gap-2 shrink-0">
                             <span class="text-xs font-bold ${scoreColor(item.score)}">${item.score}%</span>
                             ${levelPill(item.level)}
-                            <span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+                            <span class="material-symbols-outlined text-on-surface-variant dark:text-slate-300 transition-transform group-open:rotate-180">expand_more</span>
                           </div>
                         </summary>
-                        <div class="px-4 pb-5 pt-3 space-y-3 border-t border-outline-variant/70 bg-white/65">
-                          <p class="text-sm leading-relaxed"><span class="font-semibold">Por que esta pontuacao:</span> ${escapeHtml(item.explanation)}</p>
-                          <p class="text-sm leading-relaxed"><span class="font-semibold">Onde foi detectada:</span> ${escapeHtml(item.evidenceSnippet || 'Sem trecho relevante detectado no curriculo.')}</p>
-                          <p class="text-sm leading-relaxed"><span class="font-semibold">Como melhorar:</span> ${escapeHtml(item.improveSuggestion)}</p>
+                        <div class="px-4 pb-5 pt-3 space-y-3 border-t border-outline-variant/70 bg-surface-container-low/70 dark:bg-slate-900/45">
+                          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Por que esta pontuacao:</span> ${escapeHtml(item.explanation)}</p>
+                          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Onde foi detectada:</span> ${escapeHtml(item.evidenceSnippet || 'Sem trecho relevante detectado no curriculo.')}</p>
+                          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Como melhorar:</span> ${escapeHtml(item.improveSuggestion)}</p>
                         </div>
                       </details>`
                   )
@@ -499,24 +499,24 @@
                   .map((item, idx) => {
                     const priority = item.priority || (idx === 0 ? 'high' : idx === 1 ? 'medium' : 'low');
                     const accent = priorityAccent(priority);
-                    return `<details open class="group premium-hover rounded-2xl border border-outline-variant/60 overflow-hidden" style="background:${accent.tint}; border-left:4px solid ${accent.accent}; box-shadow: var(--card-shadow-soft);">
+                    return `<details open class="group premium-hover rounded-2xl border border-outline-variant/60 overflow-hidden bg-surface-container-lowest dark:bg-slate-900/70" style="border-left:4px solid ${accent.accent}; box-shadow: var(--card-shadow-soft);">
                         <summary class="list-none cursor-pointer px-4 py-4 flex items-start justify-between gap-3">
                           <div class="min-w-0">
-                            <p class="text-sm font-semibold break-words">${escapeHtml(item.title)}</p>
+                            <p class="text-sm font-semibold break-words text-on-surface dark:text-slate-100">${escapeHtml(item.title)}</p>
                             <div class="mt-1 flex items-center gap-2 flex-wrap">
                               <span class="mono-label uppercase px-2 py-1 rounded text-[10px] border" style="color:${accent.accent}; background:${accent.tint}; border-color:${accent.accent}33;">${priorityLabelPt(priority)}</span>
-                              <p class="text-xs text-on-surface-variant">${escapeHtml(item.category)}</p>
+                              <p class="text-xs text-on-surface-variant dark:text-slate-300">${escapeHtml(item.category)}</p>
                             </div>
                           </div>
                           <div class="flex items-center gap-2 shrink-0">
                             <span class="text-lg">${iconByCategory(item.category) || item.icon}</span>
-                            <span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+                            <span class="material-symbols-outlined text-on-surface-variant dark:text-slate-300 transition-transform group-open:rotate-180">expand_more</span>
                           </div>
                         </summary>
-                        <div class="px-4 pb-5 pt-3 space-y-3 border-t border-outline-variant/70 bg-white/65">
-                          <p class="text-sm leading-relaxed"><span class="font-semibold">Por que aumenta o match:</span> ${escapeHtml(item.whyMatch)}</p>
-                          <p class="text-sm leading-relaxed"><span class="font-semibold">Como executar:</span> ${escapeHtml(item.execution)}</p>
-                          <p class="text-sm leading-relaxed"><span class="font-semibold">Ganho na percepcao do recrutador:</span> ${escapeHtml(item.recruiterGain)}</p>
+                        <div class="px-4 pb-5 pt-3 space-y-3 border-t border-outline-variant/70 bg-surface-container-low/70 dark:bg-slate-900/45">
+                          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Por que aumenta o match:</span> ${escapeHtml(item.whyMatch)}</p>
+                          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Como executar:</span> ${escapeHtml(item.execution)}</p>
+                          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Ganho na percepcao do recrutador:</span> ${escapeHtml(item.recruiterGain)}</p>
                         </div>
                       </details>`;
                   })
@@ -542,20 +542,20 @@
   function CareerRoadmap(items) {
     const rows = (items || []).map((raw, idx) => {
       const row = toRoadmapWeek(raw);
-      const altTint = idx % 2 === 0 ? '#EFF6FF' : '#FFFBEB';
+      const toneClass = idx % 2 === 0 ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-amber-50 dark:bg-amber-950/25';
       const nodeColor = idx % 2 === 0 ? '#2563EB' : '#D97706';
       return `
-        <article class="relative pl-8 rounded-2xl border border-outline-variant/60 p-6 space-y-3 premium-hover" style="background:${altTint}; box-shadow: var(--card-shadow-soft);">
-          <div class="absolute left-3 top-0 bottom-0 w-px bg-[#D8E0F4]"></div>
-          <div class="absolute left-[7px] top-6 w-3 h-3 rounded-full border-2 border-white" style="background:${nodeColor};"></div>
+        <article class="relative pl-8 rounded-2xl border border-outline-variant/60 p-6 space-y-3 premium-hover ${toneClass}" style="box-shadow: var(--card-shadow-soft);">
+          <div class="absolute left-3 top-0 bottom-0 w-px bg-[#D8E0F4] dark:bg-slate-700/80"></div>
+          <div class="absolute left-[7px] top-6 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900" style="background:${nodeColor};"></div>
           <div class="flex items-center justify-between gap-3">
-            <h4 class="text-sm font-bold">Semana ${escapeHtml(row.week)} - ${escapeHtml(row.title)}</h4>
+            <h4 class="text-sm font-bold text-on-surface dark:text-slate-100">Semana ${escapeHtml(row.week)} - ${escapeHtml(row.title)}</h4>
             <span class="text-base">${ICONS.study}</span>
           </div>
-          <p class="text-sm leading-relaxed"><span class="font-semibold">Objetivo:</span> ${escapeHtml(row.focusObjective)}</p>
-          <p class="text-sm leading-relaxed"><span class="font-semibold">Tarefa pratica:</span> ${escapeHtml(row.practicalTask)}</p>
-          <p class="text-sm leading-relaxed"><span class="font-semibold">Entregavel:</span> ${escapeHtml(row.deliverable || '-')}</p>
-          <p class="text-sm leading-relaxed"><span class="font-semibold">Impacto de carreira:</span> ${escapeHtml(row.careerImpact || '-')}</p>
+          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Objetivo:</span> ${escapeHtml(row.focusObjective)}</p>
+          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Tarefa pratica:</span> ${escapeHtml(row.practicalTask)}</p>
+          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Entregavel:</span> ${escapeHtml(row.deliverable || '-')}</p>
+          <p class="text-sm leading-relaxed text-on-surface dark:text-slate-200"><span class="font-semibold">Impacto de carreira:</span> ${escapeHtml(row.careerImpact || '-')}</p>
         </article>
       `;
     });
@@ -567,7 +567,7 @@
           <span class="text-xl">${ICONS.study}</span>
           <h3 class="text-xl font-bold">${escapeHtml(t('timeline'))}</h3>
         </div>
-        <div class="relative space-y-4"><div class="absolute left-3 top-2 bottom-2 w-px bg-[#D8E0F4]"></div>${rows.join('') || `<p class="text-sm text-on-surface-variant">-</p>`}</div>
+        <div class="relative space-y-4"><div class="absolute left-3 top-2 bottom-2 w-px bg-[#D8E0F4] dark:bg-slate-700/80"></div>${rows.join('') || `<p class="text-sm text-on-surface-variant">-</p>`}</div>
       </div>
     `;
   }
@@ -718,9 +718,9 @@
               <input name="target_role" class="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20" placeholder="${escapeHtml(t('targetRolePlaceholder'))}" />
             </div>
 
-            <div class="bg-gradient-to-br from-primary/10 to-primary-fixed rounded-2xl p-6 border border-outline-variant/30">
-              <h4 class="font-bold text-primary mb-2 flex items-center gap-2"><span class="material-symbols-outlined text-sm">bolt</span>${escapeHtml(t('previewTitle'))}</h4>
-              <p class="text-sm text-on-surface-variant leading-relaxed">${escapeHtml(t('previewText'))}</p>
+            <div class="bg-gradient-to-br from-primary/10 to-primary-fixed dark:from-primary/25 dark:to-[#1e293b] rounded-2xl p-6 border border-outline-variant/30 dark:border-slate-500/30">
+              <h4 class="font-bold text-primary dark:text-indigo-200 mb-2 flex items-center gap-2"><span class="material-symbols-outlined text-sm">bolt</span>${escapeHtml(t('previewTitle'))}</h4>
+              <p class="text-sm text-slate-700 dark:text-slate-100/90 leading-relaxed">${escapeHtml(t('previewText'))}</p>
             </div>
 
             <button ${state.loading ? 'disabled' : ''} class="w-full py-3.5 rounded-2xl text-white font-bold text-base bg-gradient-to-br from-primary to-primary-container shadow-ambient hover:opacity-95 transition-opacity disabled:opacity-50">
