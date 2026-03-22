@@ -468,8 +468,8 @@
   function CareerRoadmap(items) {
     const rows = (items || []).map((raw, idx) => {
       const row = toRoadmapWeek(raw);
-      const altTint = idx % 2 === 0 ? '#F8FAFF' : '#FFF9F3';
-      const nodeColor = idx % 2 === 0 ? '#5B6CFF' : '#F59E0B';
+      const altTint = idx % 2 === 0 ? '#F8FAFF' : '#F2F7FF';
+      const nodeColor = idx % 2 === 0 ? '#5B6CFF' : '#3B82F6';
       return `
         <article class="relative pl-8 rounded-2xl border border-outline-variant/70 p-5 space-y-3 premium-hover" style="background:${altTint}; box-shadow: 0 10px 30px rgba(0,0,0,0.06);">
           <div class="absolute left-3 top-0 bottom-0 w-px bg-[#D8E0F4]"></div>
