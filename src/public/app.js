@@ -322,7 +322,7 @@
                           <div class="min-w-0 flex-1">
                             <p class="text-sm font-semibold truncate">${escapeHtml(item.skill)}</p>
                             <div class="mt-2 h-3 bg-[#E9EEF7] rounded-full overflow-hidden">
-                              <div class="h-full ${barColor(item.score)} rounded-full" style="width:${item.score}%"></div>
+                              <div class="h-full ${barColor(item.score)} rounded-full" style="width:${item.score}%; transition: width 320ms ease"></div>
                             </div>
                           </div>
                           <div class="flex items-center gap-2 shrink-0">
@@ -349,7 +349,8 @@
   function toNextAction(item) {
     if (typeof item === 'string') {
       return {
-        icon: '🚀',
+        icon: '??',
+        priority: 'medium',
         category: 'Career',
         title: item,
         whyMatch: 'Esta acao reforca sinais de aderencia para a vaga.',
@@ -358,7 +359,8 @@
       };
     }
     return {
-      icon: item.icon || '🚀',
+      icon: item.icon || '??',
+      priority: item.priority || 'medium',
       category: item.category || 'Career',
       title: item.title || 'Acao recomendada',
       whyMatch: item.whyMatch || 'Aumenta conexao entre curriculo e vaga.',
@@ -375,12 +377,11 @@
     return '🚀';
   }
 
-  function categoryAccent(category) {
-    const normalized = String(category || '').toLowerCase();
-    if (normalized.includes('match')) return { tint: '#F4F7FF', accent: '#5B6CFF' };
-    if (normalized.includes('study')) return { tint: '#FFF8F1', accent: '#F59E0B' };
-    if (normalized.includes('skill')) return { tint: '#F4F7FF', accent: '#5B6CFF' };
-    return { tint: '#FFF4F4', accent: '#F04438' };
+  function priorityAccent(priority) {
+    const normalized = String(priority || ' ').toLowerCase();
+    if (normalized === 'high') return { tint: '#FFF4F4', accent: '#F04438', label: 'HIGH' };
+    if (normalized === 'low') return { tint: '#F4F7FF', accent: '#5B6CFF', label: 'LOW' };
+    return { tint: '#FFF8F1', accent: '#F59E0B', label: 'MEDIUM' };
   }
 
   function NextActionsPanel(items) {
@@ -395,13 +396,14 @@
           ${
             list.length
               ? list
-                  .map((item) => {
-                    const accent = categoryAccent(item.category);
+                  .map((item, idx) => {
+                    const priority = item.priority || (idx === 0 ? 'high' : idx === 1 ? 'medium' : 'low');
+                    const accent = priorityAccent(priority);
                     return `<details open class="group premium-hover rounded-2xl border border-outline-variant/70 overflow-hidden" style="background:${accent.tint}; border-left:4px solid ${accent.accent}; box-shadow: 0 10px 30px rgba(0,0,0,0.06);">
                         <summary class="list-none cursor-pointer px-4 py-4 flex items-start justify-between gap-3">
                           <div class="min-w-0">
                             <p class="text-sm font-semibold break-words">${escapeHtml(item.title)}</p>
-                            <p class="text-xs text-on-surface-variant mt-1">${escapeHtml(item.category)}</p>
+                            <p class="text-xs text-on-surface-variant mt-1">${escapeHtml(item.category)} � ${accent.label}</p>
                           </div>
                           <div class="flex items-center gap-2 shrink-0">
                             <span class="text-lg">${iconByCategory(item.category) || item.icon}</span>
@@ -438,10 +440,11 @@
     const rows = (items || []).map((raw, idx) => {
       const row = toRoadmapWeek(raw);
       const altTint = idx % 2 === 0 ? '#FFFFFF' : '#F4F7FF';
+      const nodeColor = idx % 3 === 0 ? '#F04438' : idx % 3 === 1 ? '#F59E0B' : '#5B6CFF';
       return `
         <article class="relative pl-8 rounded-2xl border border-outline-variant/70 p-5 space-y-3 premium-hover" style="background:${altTint}; box-shadow: 0 10px 30px rgba(0,0,0,0.06);">
           <div class="absolute left-3 top-0 bottom-0 w-px bg-[#D8E0F4]"></div>
-          <div class="absolute left-[7px] top-6 w-3 h-3 rounded-full bg-primary border-2 border-white"></div>
+          <div class="absolute left-[7px] top-6 w-3 h-3 rounded-full border-2 border-white" style="background:${nodeColor};"></div>
           <div class="flex items-center justify-between gap-3">
             <h4 class="text-sm font-bold">Semana ${escapeHtml(row.week)} - ${escapeHtml(row.title)}</h4>
             <span class="text-base">📚</span>
@@ -460,7 +463,7 @@
           <span class="text-xl">📚</span>
           <h3 class="text-xl font-bold">${escapeHtml(t('timeline'))}</h3>
         </div>
-        <div class="space-y-4">${rows.join('') || `<p class="text-sm text-on-surface-variant">-</p>`}</div>
+        <div class="relative space-y-4"><div class="absolute left-3 top-2 bottom-2 w-px bg-[#D8E0F4]"></div>${rows.join('') || `<p class="text-sm text-on-surface-variant">-</p>`}</div>
       </div>
     `;
   }
@@ -882,3 +885,4 @@
 
   render();
 })();
+
